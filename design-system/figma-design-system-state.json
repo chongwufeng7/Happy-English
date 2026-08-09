@@ -1,0 +1,47 @@
+{
+  "runId": "happy-english-design-system-20260809-v1",
+  "fileKey": "7jlwkShHhHp16CKrJ58kiN",
+  "sourceNodeId": "10:3",
+  "phase": "phase1",
+  "step": "P1.g-validated",
+  "specFile": "Happy英语_UI设计规范_20260809_V1.0.md",
+  "entities": {
+    "collections": {
+      "primitives": "VariableCollectionId:32:2",
+      "semanticColor": "VariableCollectionId:32:3",
+      "dimensions": "VariableCollectionId:32:4"
+    },
+    "variables": {},
+    "styles": {
+      "textCount": 10,
+      "effectCount": 5,
+      "effectIds": {
+        "card": "S:4fbee5b0e3e9b42a60e9ec02c97dfd63dae4c6b4,",
+        "heroBase": "S:e294232ff642999ef500ec62ab201ada5528773d,",
+        "buttonPrimary": "S:bc90173bea9f31b4f32900fa98a3f1c4bd0abcd1,",
+        "metric": "S:9b8a36a8bf9b76d0a7c45617a2415b8257770eb1,",
+        "navigation": "S:c1e254cf0c1d4100b025b16ee1753ac082cef3a2,"
+      }
+    },
+    "pages": {},
+    "components": {},
+    "templates": {}
+  },
+  "completedSteps": [
+    "P0.a",
+    "P0.b",
+    "P0.c",
+    "P0.d",
+    "P0.e",
+    "P0.f",
+    "P1.a",
+    "P1.b-collections",
+    "P1.b-variables",
+    "P1.c",
+    "P1.d",
+    "P1.e",
+    "P1.f",
+    "P1.g"
+  ],
+  "pendingValidations": []
+}

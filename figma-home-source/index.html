@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Happy 英语｜Figma 首页源文件</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="home-page" aria-label="Happy 英语儿童首页">
+    <header class="topbar">
+      <h1>欢迎，安安！</h1>
+      <button class="star-balance" type="button" aria-label="星星总数 128">
+        <img src="assets/star-plain.svg" alt="">
+        <strong>128</strong>
+      </button>
+    </header>
+
+    <section class="hero-card">
+      <img class="hero-scene" src="assets/hero-scene.png" alt="黑白奶牛猫、紫色变色龙和鹦鹉在草地上">
+      <div class="hero-copy">
+        <h2><span>Happy</span> 英语</h2>
+        <p>今天也要开心学英语呀！</p>
+      </div>
+      <button class="start-button" type="button">开始学习</button>
+    </section>
+
+    <section class="metric-grid" aria-label="今日学习数据">
+      <article class="metric-card progress-card">
+        <img src="assets/clipboard.svg" alt="">
+        <div>
+          <h3>今日进度</h3>
+          <strong>0/3</strong>
+        </div>
+      </article>
+      <article class="metric-card stars-card">
+        <img src="assets/star-face.svg" alt="">
+        <div>
+          <h3>今日星星</h3>
+          <strong>0</strong>
+        </div>
+      </article>
+    </section>
+
+    <div class="section-heading">
+      <h2>今日任务</h2>
+      <span>约 12 分钟</span>
+    </div>
+
+    <section class="task-list" aria-label="今日任务列表">
+      <article class="task-row">
+        <img src="assets/task-chameleon.png" alt="紫色变色龙">
+        <div class="task-copy"><h3>听一听</h3><p>跟读 3 句</p></div>
+        <button type="button">未完成</button>
+      </article>
+      <article class="task-row">
+        <img src="assets/task-parrot.png" alt="鹦鹉">
+        <div class="task-copy"><h3>看图找单词</h3><p>认读 5 个</p></div>
+        <button type="button">未完成</button>
+      </article>
+      <article class="task-row">
+        <img src="assets/task-star.png" alt="写字星星">
+        <div class="task-copy"><h3>写一写</h3><p>描写 3 个</p></div>
+        <button type="button">未完成</button>
+      </article>
+    </section>
+
+    <nav class="bottom-nav" aria-label="儿童端主导航">
+      <button class="active" type="button"><img src="assets/nav-home.svg" alt=""><span>首页</span></button>
+      <button type="button"><img src="assets/nav-game.svg" alt=""><span>闯关</span></button>
+      <button type="button"><img src="assets/nav-shop.svg" alt=""><span>商城</span></button>
+      <button type="button"><img src="assets/nav-me.svg" alt=""><span>我的</span></button>
+    </nav>
+  </main>
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</body>
+</html>

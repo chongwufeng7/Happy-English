@@ -1,0 +1,27 @@
+{
+  "runId": "happy-home-figma-20260809",
+  "phase": "complete",
+  "step": "P2.c-390x844-validated",
+  "sourceUrl": "http://127.0.0.1:4175/",
+  "targetFileKey": "7jlwkShHhHp16CKrJ58kiN",
+  "targetFileUrl": "https://www.figma.com/design/7jlwkShHhHp16CKrJ58kiN",
+  "targetPlanKey": "team::1508002225331398771",
+  "entities": {
+    "collections": {},
+    "variables": {},
+    "pages": {},
+    "components": {},
+    "frames": {
+      "homepage": "10:3",
+      "homepageSource": "4:2",
+      "appContent": "12:2",
+      "statusBar": "12:84",
+      "images": "4:84",
+      "buttons": "4:85",
+      "icons": "4:86",
+      "captureReference": "1:2"
+    }
+  },
+  "completedSteps": ["P0.a", "P0.b", "P0.c", "P0.d", "P0.e", "P0.f", "P1.a", "P1.b", "P1.c", "P1.d", "P1.e", "P1.f", "P1.g", "P2.a", "P2.b", "P2.c"],
+  "pendingValidations": []
+}

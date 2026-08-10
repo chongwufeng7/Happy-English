@@ -46,10 +46,10 @@ const units = [
   }
 ];
 
-const rewards = [
-  { id: 'r1', title: '今晚选择睡前故事', cost: 12 },
-  { id: 'r2', title: '周末一起去公园', cost: 30 },
-  { id: 'r3', title: '选择一次家庭游戏', cost: 20 }
+const defaultRewards = [
+  { id: 'r1', title: '今晚选择睡前故事', cost: 12, note: '睡前可以自己挑选一本喜欢的故事书。', image: '' },
+  { id: 'r2', title: '周末一起去公园', cost: 30, note: '由家长安排合适的周末时间。', image: '' },
+  { id: 'r3', title: '选择一次家庭游戏', cost: 20, note: '从家里的亲子游戏中选择一项。', image: '' }
 ];
 
 const challengeUnits = {
@@ -130,8 +130,16 @@ const challengeUnits = {
 const challengeUnitOrder = ['u1', 'u2', 'u3'];
 
 function freshState() {
+  const initialSettings = {
+    dailyTaskCount: 3,
+    dailyMinutes: 12,
+    reminder: '19:30',
+    assignedReviewUnitIds: [],
+    assignedReviewTaskIds: []
+  };
+  const initialRewards = defaultRewards.map(item => ({ ...item }));
   return {
-    version: 3,
+    version: 4,
     role: 'child',
     screen: 'home',
     currentUnitId: 'u1',
@@ -143,7 +151,9 @@ function freshState() {
     learningByChildId: {
       'child-1': {
         currentUnitId: 'u1', stars: 36, todayStars: 0, completedTaskIds: [], todayCompletedIds: [], todayExperiencedTaskIds: [],
-        reviewItems: [], rewardRequests: [], starLedger: [], challengeProgress: { u1: 0, u2: 0, u3: 0 }, wrongAnswerStreaks: {}, dailyPlan: null, activeDate: null
+        reviewItems: [], rewardRequests: [], starLedger: [], challengeProgress: { u1: 0, u2: 0, u3: 0 }, wrongAnswerStreaks: {}, dailyPlan: null, activeDate: null,
+        settings: { ...initialSettings, assignedReviewUnitIds: [], assignedReviewTaskIds: [] },
+        rewards: initialRewards.map(item => ({ ...item }))
       }
     },
     parentSettingsTab: 'child',
@@ -156,6 +166,7 @@ function freshState() {
     activeDate: null,
     reviewItems: [],
     rewardRequests: [],
+    rewards: initialRewards,
     starLedger: [{ id: `star-${Date.now()}`, childId: 'child-1', amount: 36, action: '初始星星', at: new Date().toISOString() }],
     challengeProgress: { u1: 0, u2: 0, u3: 0 },
     wrongAnswerStreaks: {},
@@ -165,13 +176,7 @@ function freshState() {
     selectedChallengeStage: 1,
     challengeDraft: [],
     challengeDialogueStep: 0,
-    settings: {
-      dailyTaskCount: 3,
-      dailyMinutes: 12,
-      reminder: '19:30',
-      assignedReviewUnitIds: [],
-      assignedReviewTaskIds: []
-    }
+    settings: initialSettings
   };
 }
 
@@ -214,15 +219,22 @@ function loadState() {
         { ...learning, starLedger: migrateStarLedger(learning?.starLedger, childId) }
       ])
     );
+    const activeLearning = learningByChildId[activeChildId] || {};
+    const activeSavedSettings = activeLearning.settings || savedSettings;
+    const activeRewards = Array.isArray(activeLearning.rewards)
+      ? activeLearning.rewards
+      : Array.isArray(saved.rewards) ? saved.rewards : base.rewards;
     return {
       ...base,
       ...saved,
       version: base.version,
       settings: {
         ...base.settings,
-        ...savedSettings,
-        assignedReviewUnitIds: legacyDefaultReviewUnits ? [] : (savedSettings.assignedReviewUnitIds || base.settings.assignedReviewUnitIds)
+        ...activeSavedSettings,
+        assignedReviewUnitIds: legacyDefaultReviewUnits ? [] : (activeSavedSettings.assignedReviewUnitIds || base.settings.assignedReviewUnitIds),
+        assignedReviewTaskIds: activeSavedSettings.assignedReviewTaskIds || base.settings.assignedReviewTaskIds
       },
+      rewards: activeRewards.map(item => ({ note: '', image: '', ...item })),
       challengeProgress: { ...base.challengeProgress, ...(saved.challengeProgress || {}) },
       children,
       activeChildId,
@@ -337,6 +349,8 @@ let challengeStream = null;
 let challengeChunks = [];
 let challengeAudioUrl = null;
 let pendingChildAvatar = null;
+let pendingRewardImage = null;
+let editingRewardId = null;
 
 const app = document.getElementById('app');
 const overlayRoot = document.getElementById('overlay-root');
@@ -378,6 +392,7 @@ function syncActiveChildLearning() {
     } : null,
     activeDate: state.activeDate,
     settings: { ...state.settings, assignedReviewUnitIds: [...state.settings.assignedReviewUnitIds], assignedReviewTaskIds: [...state.settings.assignedReviewTaskIds] },
+    rewards: state.rewards.map(item => ({ ...item })),
     updatedAt: new Date().toISOString()
   };
 }
@@ -482,7 +497,7 @@ function resetChallengeRecording() {
   }
 }
 
-function compressAvatarFile(file) {
+function compressImageFile(file, maxEdge = 512, quality = 0.78) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.addEventListener('error', () => reject(new Error('read-failed')));
@@ -490,7 +505,6 @@ function compressAvatarFile(file) {
       const image = new Image();
       image.addEventListener('error', () => reject(new Error('image-failed')));
       image.addEventListener('load', () => {
-        const maxEdge = 512;
         const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight));
         const width = Math.max(1, Math.round(image.naturalWidth * scale));
         const height = Math.max(1, Math.round(image.naturalHeight * scale));
@@ -499,12 +513,22 @@ function compressAvatarFile(file) {
         canvas.height = height;
         const context = canvas.getContext('2d');
         context.drawImage(image, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/webp', 0.78));
+        resolve(canvas.toDataURL('image/webp', quality));
       });
       image.src = String(reader.result || '');
     });
     reader.readAsDataURL(file);
   });
+}
+
+function compressAvatarFile(file) {
+  return compressImageFile(file, 512, 0.78);
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"]/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'
+  })[character]);
 }
 
 function showToast(message) {
@@ -1011,11 +1035,12 @@ function rewardsScreen() {
   return `
     ${header('奖品兑换')}
     <main class="screen reward-grid">
-      ${rewards.map(reward => {
+      ${state.rewards.map(reward => {
         const request = state.rewardRequests.find(item => item.rewardId === reward.id && item.status === '待审批');
         return `<article class="card reward-product-card">
-          <div class="reward-product-image">奖品大图</div>
-          <h2>${reward.title}</h2>
+          <div class="reward-product-image">${reward.image ? `<img src="${reward.image}" alt="${escapeHtml(reward.title)}">` : '<span>奖品图片</span>'}</div>
+          <h2>${escapeHtml(reward.title)}</h2>
+          ${reward.note ? `<p class="reward-product-note">${escapeHtml(reward.note)}</p>` : ''}
           <div class="reward-product-action">
             <strong>☆ ${reward.cost}</strong>
             <button class="primary" data-action="request-reward" data-id="${reward.id}" ${request || state.stars < reward.cost ? 'disabled' : ''}>${request ? '待家长确认' : state.stars < reward.cost ? `还差 ${reward.cost - state.stars} 颗星` : '申请兑换'}</button>
@@ -1073,26 +1098,26 @@ function parentHome() {
         <div class="card metric"><span>今日完成</span><strong>${state.todayCompletedIds.length}</strong><small>项任务</small></div>
         <div class="card metric"><span>今日学习</span><strong>${Math.min(state.settings.dailyMinutes, state.todayCompletedIds.length * 4)}</strong><small>分钟（模拟）</small></div>
       </section>
-      <section class="card"><div class="row"><div><strong>当前计划</strong><p class="subtle">${reviewCount} 项复习 + ${newCount} 项新学 · 约 ${state.settings.dailyMinutes} 分钟 · ${state.settings.reminder} 提醒</p></div><button class="text-button" data-action="nav" data-screen="settings">修改</button></div></section>
+      <section class="card"><div class="row"><div><strong>当前计划</strong><p class="subtle">${reviewCount} 项复习 + ${newCount} 项新学 · 约 ${state.settings.dailyMinutes} 分钟 · ${state.settings.reminder} 提醒</p></div><button class="text-button" data-action="open-child-settings">修改</button></div></section>
       <h2 class="section-title">奖励审批</h2>
       <section class="card">${pendingRewards.length ? pendingRewards.map(request => {
-        const reward = rewards.find(item => item.id === request.rewardId);
-        return `<article class="reward-row"><div class="reward-copy"><h3>${reward.title}</h3><p>需要 ${reward.cost} 颗星星</p></div><div class="button-row"><button class="text-button" data-action="reward-decision" data-decision="reject" data-id="${request.id}">拒绝</button><button class="primary" data-action="reward-decision" data-decision="approve" data-id="${request.id}">同意</button></div></article>`;
+        const reward = state.rewards.find(item => item.id === request.rewardId);
+        if (!reward) return '';
+        return `<article class="reward-row"><div class="reward-copy"><h3>${escapeHtml(reward.title)}</h3><p>需要 ${reward.cost} 颗星星</p></div><div class="button-row"><button class="text-button" data-action="reward-decision" data-decision="reject" data-id="${request.id}">拒绝</button><button class="primary" data-action="reward-decision" data-decision="approve" data-id="${request.id}">同意</button></div></article>`;
       }).join('') : '<div class="empty">暂无兑换申请</div>'}</section>
     </main>
     ${parentNav('parentHome')}`;
 }
 
-function settingsScreen() {
+function taskSettingsPanel() {
   const assignedReviewTasks = state.settings.assignedReviewTaskIds.map(taskById).filter(Boolean);
   const previewPlan = buildDailyPlan();
   const previewReviewTasks = previewPlan.reviewTaskIds.map(taskById).filter(Boolean);
   const previewNewTasks = previewPlan.newTaskIds.map(taskById).filter(Boolean);
   const previewTasks = [...previewReviewTasks, ...previewNewTasks];
   return `
-    ${header('任务设置')}
-    <main class="screen">
-      <h2 class="screen-title">每日学习计划</h2>
+    <section class="child-task-settings">
+      <h2 class="section-title">任务设置</h2>
       <form id="settings-form" class="card form-grid">
         <p class="subtle plan-rule-note">计划会持续生效，无需每天重复设置。每天首次打开时自动生成；当天保持固定，家长主动修改时才重新排程。</p>
         <label class="field">每日任务数量
@@ -1122,8 +1147,12 @@ function settingsScreen() {
         </section>
         <button class="primary" type="submit">保存并同步儿童端</button>
       </form>
-    </main>
-    ${parentNav('settings')}`;
+    </section>`;
+}
+
+function settingsScreen() {
+  state.parentSettingsTab = 'child';
+  return parentSettingsScreen();
 }
 
 function reportScreen() {
@@ -1200,10 +1229,58 @@ function contentModelPanel() {
     ${units.map(unit => `<section class="card"><strong>${unit.title}</strong><p>${unit.goal}</p><span class="status">内容待核对</span></section>`).join('')}`;
 }
 
+function rewardSettingsPanel() {
+  const editingReward = editingRewardId === 'new'
+    ? { id: '', title: '', cost: 10, note: '', image: '' }
+    : state.rewards.find(item => item.id === editingRewardId);
+  const previewImage = pendingRewardImage || editingReward?.image || '';
+  const editor = editingReward ? `
+    <form id="reward-editor-form" class="card form-grid reward-editor-card">
+      <input type="hidden" name="rewardId" value="${escapeHtml(editingReward.id)}">
+      <label class="reward-image-upload" for="reward-image-file">
+        <span class="reward-image-preview">${previewImage ? `<img src="${previewImage}" alt="奖励图片预览">` : '<b>上传奖励图片</b>'}</span>
+      </label>
+      <input id="reward-image-file" class="avatar-file-input" type="file" accept="image/png,image/jpeg,image/webp">
+      <label class="field">奖励标题
+        <input name="rewardTitle" type="text" maxlength="30" value="${escapeHtml(editingReward.title)}" required>
+      </label>
+      <label class="field">所需星星
+        <input name="rewardCost" type="number" inputmode="numeric" min="1" max="9999" value="${Number(editingReward.cost) || 10}" required>
+      </label>
+      <label class="field">备注说明
+        <textarea name="rewardNote" maxlength="120" rows="3" placeholder="例如：兑换时间、使用条件或家长说明">${escapeHtml(editingReward.note)}</textarea>
+      </label>
+      <div class="reward-editor-actions">
+        <button class="secondary" type="button" data-action="cancel-reward-edit">取消</button>
+        <button class="primary" type="submit">${editingReward.id ? '保存修改' : '新增奖励'}</button>
+      </div>
+    </form>` : '';
+  return `
+    <section class="reward-settings-toolbar">
+      <div><strong>${escapeHtml(activeChildName())}的奖励</strong><p class="subtle">奖励内容和价格只应用于当前小孩。</p></div>
+      <button class="primary" data-action="add-reward">新增</button>
+    </section>
+    ${editor}
+    <section class="reward-admin-list">
+      ${state.rewards.length ? state.rewards.map(reward => `<article class="card reward-admin-card">
+        <div class="reward-admin-image">${reward.image ? `<img src="${reward.image}" alt="${escapeHtml(reward.title)}">` : '<span>暂无图片</span>'}</div>
+        <div class="reward-admin-copy">
+          <h3>${escapeHtml(reward.title)}</h3>
+          <strong>☆ ${reward.cost}</strong>
+          <p>${escapeHtml(reward.note || '暂无备注')}</p>
+        </div>
+        <div class="reward-admin-actions">
+          <button class="secondary" data-action="edit-reward" data-id="${reward.id}">编辑</button>
+          <button class="text-button danger-text" data-action="delete-reward" data-id="${reward.id}">删除</button>
+        </div>
+      </article>`).join('') : '<div class="card empty">还没有奖励，点击“新增”创建第一项奖励。</div>'}
+    </section>`;
+}
+
 function parentSettingsScreen() {
   pendingChildAvatar = null;
   const child = activeChild();
-  const tab = state.parentSettingsTab === 'content' ? 'content' : 'child';
+  const tab = ['child', 'reward', 'content'].includes(state.parentSettingsTab) ? state.parentSettingsTab : 'child';
   const childPanel = `
     <section class="card child-profile-card">
       <label class="child-avatar-upload" for="child-avatar-file" aria-label="修改小孩头像">
@@ -1219,15 +1296,17 @@ function parentSettingsScreen() {
         </label>
         <button class="primary" type="submit">保存小孩资料</button>
       </form>
-    </section>`;
+    </section>
+    ${taskSettingsPanel()}`;
   return `
     ${header('设置')}
     <main class="screen parent-settings-screen">
       <div class="settings-tabs" role="tablist" aria-label="设置分类">
         <button class="settings-tab ${tab === 'child' ? 'active' : ''}" data-action="set-parent-settings-tab" data-tab="child" role="tab" aria-selected="${tab === 'child'}">我的小孩</button>
+        <button class="settings-tab ${tab === 'reward' ? 'active' : ''}" data-action="set-parent-settings-tab" data-tab="reward" role="tab" aria-selected="${tab === 'reward'}">奖励设置</button>
         <button class="settings-tab ${tab === 'content' ? 'active' : ''}" data-action="set-parent-settings-tab" data-tab="content" role="tab" aria-selected="${tab === 'content'}">教材内容</button>
       </div>
-      <section class="settings-tab-panel">${tab === 'child' ? childPanel : contentModelPanel()}</section>
+      <section class="settings-tab-panel">${tab === 'child' ? childPanel : tab === 'reward' ? rewardSettingsPanel() : contentModelPanel()}</section>
       <footer class="settings-version"><strong>V1.0</strong><span>提醒：教材内容仍处于准备阶段，正式制作前需复核教材及授权。</span></footer>
     </main>
     ${parentNav('parentSettings')}`;
@@ -1235,9 +1314,9 @@ function parentSettingsScreen() {
 
 function parentNav(active) {
   const items = [
-    ['parentHome', '概览', '□'], ['settings', '任务', '≡'], ['report', '报告', '▤'], ['parentSettings', '设置', '⚙']
+    ['parentHome', '概览', '□'], ['report', '报告', '▤'], ['parentSettings', '设置', '⚙']
   ];
-  return `<nav class="bottom-nav" aria-label="家长端导航">${items.map(([id, label, icon]) => `<button class="nav-item ${active === id ? 'active' : ''}" data-action="nav" data-screen="${id}"><span>${icon}</span>${label}</button>`).join('')}</nav>`;
+  return `<nav class="bottom-nav three-items" aria-label="家长端导航">${items.map(([id, label, icon]) => `<button class="nav-item ${active === id ? 'active' : ''}" data-action="nav" data-screen="${id}"><span>${icon}</span>${label}</button>`).join('')}</nav>`;
 }
 
 function requestPassword() {
@@ -1267,7 +1346,7 @@ function showChallengeRules() {
 }
 
 function requestReward(rewardId) {
-  const reward = rewards.find(item => item.id === rewardId);
+  const reward = state.rewards.find(item => item.id === rewardId);
   if (!reward || state.stars < reward.cost) return showToast('星星还不够，慢慢积累');
   if (!state.rewardRequests.some(item => item.rewardId === rewardId && item.status === '待审批')) {
     state.rewardRequests.push({ id: `request-${Date.now()}`, rewardId, status: '待审批' });
@@ -1280,7 +1359,7 @@ function requestReward(rewardId) {
 function decideReward(requestId, decision) {
   const request = state.rewardRequests.find(item => item.id === requestId);
   if (!request || request.status !== '待审批') return;
-  const reward = rewards.find(item => item.id === request.rewardId);
+  const reward = state.rewards.find(item => item.id === request.rewardId);
   if (decision === 'approve' && reward && state.stars >= reward.cost) {
     recordStarChange(-reward.cost, `兑换奖品：${reward.title}`);
     request.status = '已同意';
@@ -1303,7 +1382,7 @@ function render() {
   const isChildHome = state.role === 'child' && state.screen === 'home';
   app.innerHTML = `<div class="app-shell ${isInnerScreen ? 'inner-shell' : ''} ${isChildHome ? 'child-home-shell' : ''}">${systemStatusBar()}${(screens[state.screen] || fallback)()}</div>`;
 
-  if (state.screen === 'settings') {
+  if (['settings', 'parentSettings'].includes(state.screen)) {
     const form = document.getElementById('settings-form');
     if (form) {
       form.dailyTaskCount.value = String(state.settings.dailyTaskCount);
@@ -1318,8 +1397,45 @@ document.addEventListener('click', event => {
   const { action, id, screen, role, decision } = control.dataset;
   if (action === 'nav') navTo(screen);
   if (action === 'set-parent-settings-tab') {
-    state.parentSettingsTab = control.dataset.tab === 'content' ? 'content' : 'child';
+    state.parentSettingsTab = ['child', 'reward', 'content'].includes(control.dataset.tab) ? control.dataset.tab : 'child';
+    editingRewardId = null;
+    pendingRewardImage = null;
     save();
+    render();
+  }
+  if (action === 'open-child-settings') {
+    state.parentSettingsTab = 'child';
+    state.screen = 'parentSettings';
+    save();
+    render();
+  }
+  if (action === 'add-reward') {
+    editingRewardId = 'new';
+    pendingRewardImage = null;
+    render();
+  }
+  if (action === 'edit-reward') {
+    if (!state.rewards.some(item => item.id === id)) return;
+    editingRewardId = id;
+    pendingRewardImage = null;
+    render();
+  }
+  if (action === 'cancel-reward-edit') {
+    editingRewardId = null;
+    pendingRewardImage = null;
+    render();
+  }
+  if (action === 'delete-reward') {
+    const reward = state.rewards.find(item => item.id === id);
+    if (!reward) return;
+    const hasPendingRequest = state.rewardRequests.some(item => item.rewardId === id && item.status === '待审批');
+    if (hasPendingRequest) return showToast('请先处理该奖励的待审批申请');
+    if (!confirm(`确定删除“${reward.title}”吗？`)) return;
+    state.rewards = state.rewards.filter(item => item.id !== id);
+    if (editingRewardId === id) editingRewardId = null;
+    pendingRewardImage = null;
+    save();
+    showToast('奖励已删除');
     render();
   }
   if (action === 'open-star-bill') {
@@ -1482,7 +1598,7 @@ document.addEventListener('click', event => {
 });
 
 document.addEventListener('change', async event => {
-  if (event.target.id !== 'child-avatar-file') return;
+  if (!['child-avatar-file', 'reward-image-file'].includes(event.target.id)) return;
   const file = event.target.files?.[0];
   if (!file) return;
   if (file.size > 12 * 1024 * 1024) {
@@ -1490,18 +1606,57 @@ document.addEventListener('change', async event => {
     return showToast('原图请控制在 12MB 以内');
   }
   try {
-    pendingChildAvatar = await compressAvatarFile(file);
-    const preview = document.querySelector('.child-avatar-preview');
-    if (preview) preview.innerHTML = `<img src="${pendingChildAvatar}" alt="新头像预览">`;
-    showToast('头像已自动压缩，点击保存即可生效');
+    if (event.target.id === 'child-avatar-file') {
+      pendingChildAvatar = await compressAvatarFile(file);
+      const preview = document.querySelector('.child-avatar-preview');
+      if (preview) preview.innerHTML = `<img src="${pendingChildAvatar}" alt="新头像预览">`;
+      showToast('头像已自动压缩，点击保存即可生效');
+    } else {
+      pendingRewardImage = await compressImageFile(file, 720, 0.8);
+      const preview = document.querySelector('.reward-image-preview');
+      if (preview) preview.innerHTML = `<img src="${pendingRewardImage}" alt="奖励图片预览">`;
+      showToast('奖励图片已自动压缩');
+    }
   } catch {
-    pendingChildAvatar = null;
+    if (event.target.id === 'child-avatar-file') pendingChildAvatar = null;
+    else pendingRewardImage = null;
     event.target.value = '';
-    showToast('头像处理失败，请换一张图片');
+    showToast('图片处理失败，请换一张图片');
   }
 });
 
 document.addEventListener('submit', event => {
+  if (event.target.id === 'reward-editor-form') {
+    event.preventDefault();
+    const data = new FormData(event.target);
+    const rewardId = String(data.get('rewardId') || '');
+    const title = String(data.get('rewardTitle') || '').trim();
+    const cost = Math.round(Number(data.get('rewardCost')));
+    const note = String(data.get('rewardNote') || '').trim();
+    if (!title) return showToast('请输入奖励标题');
+    if (!Number.isFinite(cost) || cost < 1 || cost > 9999) return showToast('星星价格需为 1–9999 的整数');
+    if (rewardId) {
+      const reward = state.rewards.find(item => item.id === rewardId);
+      if (!reward) return showToast('没有找到需要编辑的奖励');
+      reward.title = title;
+      reward.cost = cost;
+      reward.note = note;
+      if (pendingRewardImage) reward.image = pendingRewardImage;
+    } else {
+      state.rewards.unshift({
+        id: `reward-${Date.now()}`,
+        title,
+        cost,
+        note,
+        image: pendingRewardImage || ''
+      });
+    }
+    editingRewardId = null;
+    pendingRewardImage = null;
+    save();
+    showToast(rewardId ? '奖励已更新' : '奖励已新增');
+    render();
+  }
   if (event.target.id === 'review-suggestion-form') {
     event.preventDefault();
     const data = new FormData(event.target);

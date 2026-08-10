@@ -2,8 +2,8 @@
   "runId": "happy-english-design-system-20260809-v1",
   "fileKey": "7jlwkShHhHp16CKrJ58kiN",
   "sourceNodeId": "10:3",
-  "phase": "phase1",
-  "step": "P1.g-validated",
+  "phase": "phase3",
+  "step": "P3.a-button-checkpoint",
   "specFile": "Happy英语_UI设计规范_20260809_V1.0.md",
   "entities": {
     "collections": {
@@ -23,8 +23,14 @@
         "navigation": "S:c1e254cf0c1d4100b025b16ee1753ac082cef3a2,"
       }
     },
-    "pages": {},
-    "components": {},
+    "pages": {
+      "cover": "39:2",
+      "foundations": "40:2",
+      "button": "46:2"
+    },
+    "components": {
+      "button": "48:2"
+    },
     "templates": {}
   },
   "completedSteps": [
@@ -41,7 +47,14 @@
     "P1.d",
     "P1.e",
     "P1.f",
-    "P1.g"
+    "P1.g",
+    "P2.a",
+    "P2.b",
+    "P2.c",
+    "P3.a-tokens",
+    "P3.a-page",
+    "P3.a-variants",
+    "P3.a-validation"
   ],
   "pendingValidations": []
 }

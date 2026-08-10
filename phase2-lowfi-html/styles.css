@@ -8,6 +8,31 @@
   --selected: #dedede;
   --danger: #8a2020;
   --radius: 18px;
+
+  /* Happy 英语公共 UI 基础：只在已确认页面逐步接入。 */
+  --happy-color-bg-app: #fffaf1;
+  --happy-color-bg-surface: #ffffff;
+  --happy-color-bg-hero: #5dccf5;
+  --happy-color-bg-progress: #e5f7ff;
+  --happy-color-bg-star: #fff3cf;
+  --happy-color-action-primary: #ffc93e;
+  --happy-color-text-primary: #4b2518;
+  --happy-color-text-secondary: #9b7a68;
+  --happy-color-accent-blue: #247dbe;
+  --happy-color-accent-orange: #f47c16;
+  --happy-color-border-subtle: #efe2d2;
+  --happy-color-status-default-bg: #e4f5ff;
+  --happy-color-status-default-text: #2387c8;
+  --happy-radius-card: 21.445px;
+  --happy-radius-hero: 24.126px;
+  --happy-radius-pill: 999px;
+  --happy-shadow-card: 0 4.468px 12.51px rgba(75, 37, 24, .09);
+  --happy-shadow-nav: 0 -2.681px 12.51px rgba(75, 37, 24, .06);
+  --happy-space-1: 4px;
+  --happy-space-2: 8px;
+  --happy-space-3: 12px;
+  --happy-space-4: 16px;
+  --happy-space-6: 24px;
 }
 
 * { box-sizing: border-box; }
@@ -193,6 +218,41 @@ button { cursor: pointer; }
 .primary:focus-visible, .secondary:focus-visible, .text-button:focus-visible, input:focus-visible, select:focus-visible {
   outline: 3px solid #777;
   outline-offset: 2px;
+}
+
+/* Happy 公共组件：后续确认页面复用，当前仅儿童首页接入。 */
+.happy-button {
+  min-height: 48px;
+  border-radius: var(--happy-radius-pill);
+  font-weight: 900;
+  touch-action: manipulation;
+}
+
+.happy-button-primary {
+  color: var(--happy-color-text-primary);
+  background: var(--happy-color-action-primary);
+}
+
+.happy-pill-button {
+  min-height: 36px;
+  padding: 7px 14px;
+  color: var(--happy-color-text-primary);
+  background: var(--happy-color-bg-surface);
+  border: 1px solid var(--happy-color-border-subtle);
+  border-radius: var(--happy-radius-pill);
+  box-shadow: var(--happy-shadow-card);
+  font-weight: 700;
+  touch-action: manipulation;
+}
+
+.happy-pill-button:active { transform: scale(.97); }
+.happy-pill-button:focus-visible { outline: 3px solid var(--happy-color-accent-blue); outline-offset: 2px; }
+
+.happy-surface-card {
+  background: rgba(255, 255, 255, .94);
+  border: 1px solid var(--happy-color-border-subtle);
+  border-radius: var(--happy-radius-card);
+  box-shadow: var(--happy-shadow-card);
 }
 
 .hero .primary { align-self: flex-start; min-width: 160px; margin-top: 20px; }
@@ -642,6 +702,133 @@ button.challenge-theme-card:active { transform: scale(.99); }
 .dialog p { margin: 0 0 16px; color: var(--muted); }
 .error { min-height: 22px; color: var(--danger); font-size: 14px; }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 儿童端切换家长端：对应 Figma 节点 112:14。 */
+.happy-role-overlay {
+  inset: 0 auto 0 50%;
+  width: min(100%, 430px);
+  padding: 20px 32px;
+  transform: translateX(-50%);
+  background: rgba(28, 15, 8, .36);
+}
+
+.happy-role-dialog {
+  width: min(100%, 326px);
+  min-height: 286px;
+  padding: 26px 20px 24px;
+  overflow: hidden;
+  color: var(--happy-color-text-primary);
+  background: #fffcf7;
+  border: 2px solid #c7b8eb;
+  border-radius: 28px;
+  box-shadow: none;
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+
+.happy-role-dialog h2 {
+  margin: 0;
+  color: #381a0a;
+  font-size: 23px;
+  font-weight: 900;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.happy-role-dialog > p {
+  margin: 10px 0 24px;
+  color: #755745;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 24px;
+  text-align: center;
+}
+
+.happy-password-label {
+  display: block;
+  width: 100%;
+}
+
+.happy-password-label input {
+  width: 100%;
+  height: 58px;
+  padding: 0 18px 0 24px;
+  color: #634ab8;
+  background: #f7f5f0;
+  border: 2px solid #c7b8eb;
+  border-radius: 18px;
+  outline: 0;
+  caret-color: #634ab8;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 58px;
+  letter-spacing: 6px;
+  text-align: center;
+}
+
+.happy-password-label input:focus {
+  border-color: #8f75dc;
+  box-shadow: 0 0 0 3px rgba(143, 117, 220, .16);
+}
+
+.happy-password-error {
+  min-height: 24px;
+  padding-top: 3px;
+  color: #a54040;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.happy-dialog-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 132px));
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 12px;
+}
+
+.happy-dialog-actions .primary,
+.happy-dialog-actions .secondary {
+  width: 132px;
+  min-height: 46px;
+  height: 46px;
+  padding: 10px 16px;
+  border-radius: var(--happy-radius-pill);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.happy-dialog-actions .secondary {
+  color: var(--happy-color-text-primary);
+  background: var(--happy-color-bg-surface);
+  border: 1px solid var(--happy-color-border-subtle);
+}
+
+.happy-dialog-actions .primary {
+  color: var(--happy-color-text-primary);
+  background: var(--happy-color-action-primary);
+  border: 2px solid #fff3cf;
+  box-shadow: 0 5px 0 #eda70f, 0 8px 13px rgba(203, 135, 9, .18);
+}
+
+.happy-dialog-actions .primary:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #eda70f;
+}
+
 .toast {
   position: fixed;
   z-index: 30;
@@ -989,12 +1176,12 @@ button.challenge-theme-card:active { transform: scale(.99); }
 
 /* 二期-6：首页正式视觉试稿。仅作用于儿童首页。 */
 .child-home-shell {
-  --home-cream: #fffaf1;
-  --home-brown: #4b2518;
-  --home-blue: #5dccf5;
-  --home-blue-soft: #e5f7ff;
-  --home-yellow: #ffc93e;
-  --home-yellow-soft: #fff3cf;
+  --home-cream: var(--happy-color-bg-app);
+  --home-brown: var(--happy-color-text-primary);
+  --home-blue: var(--happy-color-bg-hero);
+  --home-blue-soft: var(--happy-color-bg-progress);
+  --home-yellow: var(--happy-color-action-primary);
+  --home-yellow-soft: var(--happy-color-bg-star);
   padding-bottom: 70px;
   color: var(--home-brown);
   background: var(--home-cream);
@@ -1018,6 +1205,16 @@ button.challenge-theme-card:active { transform: scale(.99); }
   font-weight: 900;
   line-height: 1;
   letter-spacing: -.54px;
+}
+
+.home-parent-entry {
+  flex: 0 0 auto;
+  min-width: 104px;
+  height: 36px;
+  min-height: 36px;
+  padding: 6px 11px;
+  font-size: 14px;
+  line-height: 1;
 }
 
 .home-star-balance {
@@ -1209,9 +1406,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
   overflow: hidden;
   padding: 0;
   background: rgba(255, 255, 255, .94);
-  border: .6px solid #efe2d2;
-  border-radius: 21.4px;
-  box-shadow: 0 4.5px 12.5px rgba(75, 37, 24, .09);
+  border-width: .6px;
 }
 .home-task-row {
   min-height: 68px;
@@ -1381,7 +1576,395 @@ button.challenge-theme-card:active { transform: scale(.99); }
 .child-home-shell .home-bottom-nav .nav-item[data-screen="home"] { color: #3f7a0d; }
 .child-home-shell .home-bottom-nav .nav-item[data-screen="units"] { color: #5d51b8; }
 .child-home-shell .home-bottom-nav .nav-item[data-screen="rewards"] { color: #a64a00; }
-.child-home-shell .home-bottom-nav .nav-item.active { transform: none; }
+.child-home-shell .home-bottom-nav .nav-item.active {
+  border-radius: 18px;
+  background: #e9f4d6;
+  transform: none;
+}
+
+/* 儿童端奖励页：依据 Figma 98:126，仅作用于已确认的奖励一级页。 */
+.child-rewards-shell {
+  min-height: 100dvh;
+  padding-bottom: 70px;
+  color: var(--happy-color-text-primary);
+  background: var(--happy-color-bg-app);
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+
+.child-rewards-shell .system-status-bar {
+  background: var(--happy-color-bg-app);
+}
+
+.reward-topbar {
+  position: relative;
+  top: auto;
+  z-index: 2;
+  min-height: 60px;
+  height: 60px;
+  padding: 12px 14px;
+  color: var(--happy-color-text-primary);
+  background: var(--happy-color-bg-app);
+  border-bottom: 0;
+}
+
+.reward-star-balance {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 94px;
+  height: 36px;
+  padding: 5px 13px 5px 10px;
+  color: var(--happy-color-text-primary);
+  background: rgba(255, 255, 255, .94);
+  border: 1px solid #f1e6d8;
+  border-radius: var(--happy-radius-pill);
+  box-shadow: var(--happy-shadow-card);
+}
+
+.reward-star-balance::after {
+  content: "";
+  position: absolute;
+  inset: -6px 0;
+  border-radius: inherit;
+}
+
+.reward-star-balance img {
+  width: 21px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.reward-star-balance strong {
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.reward-star-balance:active { transform: scale(.97); }
+.reward-star-balance:focus-visible { outline: 3px solid var(--happy-color-accent-blue); outline-offset: 2px; }
+
+.reward-parent-entry {
+  flex: 0 0 auto;
+  min-width: 104px;
+  height: 36px;
+  min-height: 36px;
+  padding: 6px 11px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.child-rewards-screen {
+  padding: 0 14px 92px;
+  background: var(--happy-color-bg-app);
+}
+
+.reward-hero {
+  position: relative;
+  height: 116px;
+  overflow: hidden;
+  margin: 0 0 18px;
+  color: var(--happy-color-text-primary);
+  background: var(--happy-color-bg-hero);
+  border-radius: 28px;
+  box-shadow: var(--happy-shadow-card);
+}
+
+.reward-hero-copy {
+  position: relative;
+  z-index: 1;
+  padding: 14px 112px 8px 24px;
+}
+
+.reward-hero h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 38px;
+}
+
+.reward-hero p {
+  margin: 1px 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.reward-hero span {
+  display: block;
+  width: 204px;
+  height: 25px;
+  padding: 5px 12px;
+  color: var(--happy-color-text-primary);
+  background: rgba(255, 255, 255, .88);
+  border-radius: 13px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 15px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.reward-hero > img {
+  position: absolute;
+  top: 11px;
+  right: 10px;
+  width: 94px;
+  height: 94px;
+  object-fit: contain;
+}
+
+.child-rewards-shell .reward-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.child-rewards-shell .reward-product-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 14px;
+  width: 100%;
+  height: 178px;
+  margin: 0;
+  padding: 13px;
+  overflow: hidden;
+  background: var(--happy-color-bg-surface);
+  border: 1px solid var(--happy-color-border-subtle);
+  border-radius: 24px;
+  box-shadow: var(--happy-shadow-card);
+}
+
+.child-rewards-shell .reward-product-image {
+  width: 150px;
+  height: 150px;
+  min-height: 0;
+  overflow: hidden;
+  background: #e7f7ff;
+  border: 0;
+  border-radius: 14px;
+}
+
+.child-rewards-shell .reward-product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reward-product-copy {
+  position: relative;
+  min-width: 0;
+  padding: 3px 0 0;
+}
+
+.child-rewards-shell .reward-product-card h2 {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--happy-color-text-primary);
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 25px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.child-rewards-shell .reward-product-note {
+  display: -webkit-box;
+  overflow: hidden;
+  height: 34px;
+  margin: 5px 0 2px;
+  color: var(--happy-color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 17px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.reward-redeemed-time {
+  display: block;
+  margin-top: 2px;
+  color: #7a7a7a;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.child-rewards-shell .reward-product-action {
+  position: absolute;
+  right: 0;
+  bottom: 1px;
+  left: 0;
+  display: grid;
+  gap: 6px;
+  align-items: end;
+}
+
+.child-rewards-shell .reward-product-action > strong {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 24px;
+  color: var(--happy-color-text-primary);
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 24px;
+}
+
+.child-rewards-shell .reward-product-action > strong img {
+  width: 21px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.reward-exchange-button {
+  width: 148px;
+  height: 44px;
+  min-height: 44px;
+  padding: 9px 14px;
+  color: var(--happy-color-text-primary);
+  background: var(--happy-color-action-primary);
+  border: 2px solid #fff3cf;
+  border-radius: var(--happy-radius-pill);
+  box-shadow: 0 5px 0 #eda70f, 0 8px 13px rgba(203, 135, 9, .18);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.reward-exchange-button:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #eda70f;
+}
+
+.reward-exchange-button.is-disabled,
+.reward-exchange-button:disabled {
+  color: var(--happy-color-text-secondary);
+  background: #efe2d2;
+  border: 1px solid #efe2d2;
+  box-shadow: none;
+  cursor: default;
+}
+
+.reward-product-card.is-redeemed {
+  height: 170px;
+  opacity: .64;
+  background: #f2f2f0;
+  filter: saturate(.15);
+}
+
+.reward-product-card.is-redeemed .reward-product-image {
+  width: 122px;
+  height: 92px;
+  margin: 8px 14px 0 0;
+  background: transparent;
+}
+
+.reward-product-card.is-redeemed .reward-product-copy { margin-left: -28px; }
+
+.reward-state-badge {
+  position: absolute;
+  top: -5px;
+  right: 1px;
+  min-width: 72px;
+  height: 26px;
+  padding: 5px 12px;
+  color: #7a7a7a;
+  background: #e0e0e0;
+  border-radius: 13px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+.reward-product-card.is-redeemed h2 { padding-right: 76px; color: #4d4d4d; }
+.reward-product-card.is-redeemed .reward-product-note { padding-right: 4px; color: #7a7a7a; }
+.reward-product-card.is-redeemed .reward-product-action { grid-template-columns: 58px 132px; gap: 8px; align-items: end; }
+.reward-product-card.is-redeemed .reward-product-action > strong { color: #7a7a7a; }
+.reward-product-card.is-redeemed .reward-exchange-button { width: 132px; }
+
+.child-rewards-shell .reward-empty-state {
+  min-height: 356px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0;
+  padding: 28px 24px 34px;
+  text-align: center;
+  background: rgba(255, 255, 255, .94);
+  border: 1px solid var(--happy-color-border-subtle);
+  border-radius: 24px;
+  box-shadow: var(--happy-shadow-card);
+}
+
+.child-rewards-shell .reward-empty-state > img {
+  width: 124px;
+  height: 124px;
+  object-fit: contain;
+}
+
+.child-rewards-shell .reward-empty-state h2 {
+  margin: 0;
+  color: var(--happy-color-text-primary);
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.child-rewards-shell .reward-empty-state p {
+  margin: 0 0 5px;
+  color: var(--happy-color-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.child-rewards-shell .reward-empty-state .reward-exchange-button { width: 230px; }
+
+.child-rewards-shell .happy-bottom-nav {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: flex-end;
+  gap: 0;
+  width: min(calc(100% - 26px), 404px);
+  height: 70px;
+}
+
+.child-rewards-shell .happy-bottom-nav .nav-item {
+  width: auto;
+  height: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 1px 5px;
+  border-radius: 18px;
+  font-size: 13.4px;
+  font-weight: 900;
+}
+
+.child-rewards-shell .happy-bottom-nav .nav-item::before { display: none; }
+
+.child-rewards-shell .happy-bottom-nav .nav-item img {
+  display: block;
+  width: 30.4px;
+  height: 30.4px;
+  margin: 0;
+  object-fit: contain;
+}
+
+.child-rewards-shell .happy-bottom-nav .nav-item[data-screen="home"] { color: #5ea915; }
+.child-rewards-shell .happy-bottom-nav .nav-item[data-screen="units"] { color: #8076d8; }
+.child-rewards-shell .happy-bottom-nav .nav-item[data-screen="rewards"] { color: #ef7e0c; }
+.child-rewards-shell .happy-bottom-nav .nav-item.active { background: #fff0d1; transform: none; }
 
 @media (max-width: 360px) {
   .home-top-welcome h1 { font-size: 21px; }
@@ -1394,6 +1977,11 @@ button.challenge-theme-card:active { transform: scale(.99); }
   .home-task-icon { flex-basis: 47px; width: 47px; height: 47px; }
   .home-task-row .status { flex-basis: 64px; min-width: 64px; font-size: 13px; }
   .child-home-shell .home-bottom-nav { gap: 0; }
+  .reward-hero-copy { padding-left: 18px; }
+  .reward-hero p { font-size: 12px; }
+  .child-rewards-shell .reward-product-card { grid-template-columns: 136px minmax(0, 1fr); gap: 10px; }
+  .child-rewards-shell .reward-product-image { width: 136px; }
+  .reward-exchange-button { width: 100%; }
 }
 
 @media (min-width: 700px) {

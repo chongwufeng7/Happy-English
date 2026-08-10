@@ -23,7 +23,7 @@ const path = require('path');
   const checks = {
     welcome: await page.locator('.home-top-welcome h1').textContent(),
     tagline: await page.locator('.home-hero-tagline').textContent(),
-    starBalance: await page.locator('.home-star-balance strong').textContent(),
+    parentEntry: await page.locator('.home-parent-entry').textContent(),
     heroImageWidth: await page.locator('.home-hero-card > img').evaluate(image => image.naturalWidth),
     heroHeight: await page.locator('.home-hero-card').evaluate(element => element.getBoundingClientRect().height),
     metricHeight: await page.locator('.home-metrics .metric').first().evaluate(element => element.getBoundingClientRect().height),
@@ -49,13 +49,29 @@ const path = require('path');
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(100);
 
+  await page.locator('.home-parent-entry').click();
+  const dialogBox = await page.locator('.happy-role-dialog').boundingBox();
+  const passwordInputBox = await page.locator('#role-password').boundingBox();
+  const dialogButtonCount = await page.locator('.happy-dialog-actions button').count();
+  await page.screenshot({ path: path.join(outputDir, 'preview-child-parent-password-modal.png') });
+  await page.locator('#role-password').fill('000000');
+  await page.locator('[data-action="confirm-role"]').click();
+  const passwordError = await page.locator('#password-error').textContent();
+  await page.locator('[data-action="close-overlay"]').click();
+  const modalClosed = await page.locator('.happy-role-dialog').count() === 0;
+
+  checks.dialogWidth = Math.round(dialogBox?.width || 0);
+  checks.dialogHeight = Math.round(dialogBox?.height || 0);
+  checks.passwordInputHeight = Math.round(passwordInputBox?.height || 0);
+  checks.dialogButtonCount = dialogButtonCount;
+
   const taskScreenBefore = await page.locator('.home-task-row .status').first().click().then(() => page.locator('.secondary-topbar h1').textContent());
   await page.locator('[data-action="secondary-back"]').click();
   const returnedHome = await page.locator('.home-hero-card').isVisible();
 
   if (!checks.welcome?.toLowerCase().includes('happy')) issues.push('welcome name missing');
   if (!checks.tagline?.includes('开心学英语')) issues.push('hero tagline missing');
-  if (!checks.starBalance) issues.push('star balance missing');
+  if (!checks.parentEntry?.includes('切换家长端')) issues.push('parent switch entry missing');
   if (checks.heroImageWidth <= 0) issues.push('hero image not loaded');
   if (Math.abs(checks.heroHeight - 253) > 1) issues.push(`hero height drifted: ${checks.heroHeight}px`);
   if (Math.abs(checks.metricHeight - 90) > 1) issues.push(`metric height drifted: ${checks.metricHeight}px`);
@@ -65,9 +81,15 @@ const path = require('path');
   if (checks.startButtonHeight < 48) issues.push('start button touch target too small');
   if (checks.statusButtonMinHeight < 36) issues.push('status button touch target too small');
   if (checks.bottomClearance < 8) issues.push(`bottom content is obscured by navigation: ${checks.bottomClearance}px`);
+  if (Math.abs(checks.dialogWidth - 326) > 1) issues.push(`password dialog width drifted: ${checks.dialogWidth}px`);
+  if (checks.dialogHeight < 286) issues.push(`password dialog height too small: ${checks.dialogHeight}px`);
+  if (Math.abs(checks.passwordInputHeight - 58) > 1) issues.push(`password input height drifted: ${checks.passwordInputHeight}px`);
+  if (checks.dialogButtonCount !== 2) issues.push(`expected 2 dialog buttons, got ${checks.dialogButtonCount}`);
+  if (!passwordError?.includes('密码不正确')) issues.push('wrong password feedback missing');
+  if (!modalClosed) issues.push('password dialog did not close');
   if (!returnedHome) issues.push('task back navigation failed');
 
-  console.log(JSON.stringify({ checks, taskScreenBefore, returnedHome, issues }, null, 2));
+  console.log(JSON.stringify({ checks, passwordError, modalClosed, taskScreenBefore, returnedHome, issues }, null, 2));
   await browser.close();
   if (issues.length) process.exitCode = 1;
 })();

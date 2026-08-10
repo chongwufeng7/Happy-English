@@ -3,7 +3,7 @@
   "fileKey": "7jlwkShHhHp16CKrJ58kiN",
   "sourceNodeId": "10:3",
   "phase": "phase3",
-  "step": "P3.a-button-checkpoint",
+  "step": "P3.c-component-library-complete",
   "specFile": "Happy英语_UI设计规范_20260809_V1.0.md",
   "entities": {
     "collections": {
@@ -26,10 +26,30 @@
     "pages": {
       "cover": "39:2",
       "foundations": "40:2",
-      "button": "46:2"
+      "button": "46:2",
+      "statusBar": "132:2",
+      "starBalance": "132:16",
+      "topBar": "133:2",
+      "bottomNavigation": "134:78",
+      "metricCard": "135:2",
+      "taskRow": "136:2",
+      "rewardCard": "137:2",
+      "rewardEmptyState": "138:14",
+      "parentSwitchDialog": "139:2",
+      "rewardStatusBadge": "139:25"
     },
     "components": {
-      "button": "48:2"
+      "button": "48:2",
+      "statusBar": "132:15",
+      "starBalance": "132:20",
+      "topBar": "133:16",
+      "bottomNavigation": "134:154",
+      "metricCard": "135:31",
+      "taskRow": "136:23",
+      "rewardCard": "137:182",
+      "rewardEmptyState": "138:15",
+      "parentSwitchDialog": "139:22",
+      "rewardStatusBadge": "139:38"
     },
     "templates": {}
   },
@@ -54,7 +74,20 @@
     "P3.a-tokens",
     "P3.a-page",
     "P3.a-variants",
-    "P3.a-validation"
+    "P3.a-validation",
+    "P3.b-status-bar",
+    "P3.b-star-balance",
+    "P3.b-top-bar",
+    "P3.b-bottom-navigation",
+    "P3.b-validation",
+    "P3.c-metric-card",
+    "P3.c-task-row",
+    "P3.c-reward-card",
+    "P3.c-reward-empty-state",
+    "P3.c-parent-switch-dialog",
+    "P3.c-reward-status-badge",
+    "P3.c-cover-update",
+    "P3.c-validation"
   ],
   "pendingValidations": []
 }

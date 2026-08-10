@@ -1,0 +1,25 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="150" height="150" viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Illustration&#239;&#189;&#156;Park">
+<g clip-path="url(#clip0_0_13)">
+<rect id="Rectangle 1" y="150" width="150" height="150" rx="16" transform="rotate(-90 0 150)" fill="#ECE8FF"/>
+<path id="Vector" d="M27.5 71C36.0604 71 43 63.8366 43 55C43 46.1634 36.0604 39 27.5 39C18.9396 39 12 46.1634 12 55C12 63.8366 18.9396 71 27.5 71Z" fill="#FFB58D"/>
+<path id="Vector_2" d="M71.5 65C81.165 65 89 56.9411 89 47C89 37.0589 81.165 29 71.5 29C61.835 29 54 37.0589 54 47C54 56.9411 61.835 65 71.5 65Z" fill="#FFD76D"/>
+<path id="Vector_3" d="M115.5 71C124.06 71 131 63.8366 131 55C131 46.1634 124.06 39 115.5 39C106.94 39 100 46.1634 100 55C100 63.8366 106.94 71 115.5 71Z" fill="#9BD9F1"/>
+<path id="Vector_4" d="M6 120C7.1129 91.7949 19.3548 76 40.5 76C61.6452 76 73.8871 91.7949 75 120H6Z" fill="#F37C16"/>
+<path id="Vector_5" d="M67 120C68.1 87.2174 82.4 68 105.5 68C128.6 68 142.9 87.2174 144 120H67Z" fill="#5EAA15"/>
+<path id="Vector_6" d="M92.5854 84H50.4146C36.9308 84 26 94.969 26 108.5C26 122.031 36.9308 133 50.4146 133H92.5854C106.069 133 117 122.031 117 108.5C117 94.969 106.069 84 92.5854 84Z" fill="#8276D8" stroke="white" stroke-width="5"/>
+<g id="Vector_7">
+<path d="M51.5 100V119ZM42 109.5H61Z" fill="black"/>
+<path d="M51.5 100V119M42 109.5H61" stroke="white" stroke-width="6" stroke-linecap="round"/>
+</g>
+<path id="Vector_8" d="M91.5 110C94.5376 110 97 107.314 97 104C97 100.686 94.5376 98 91.5 98C88.4624 98 86 100.686 86 104C86 107.314 88.4624 110 91.5 110Z" fill="#FFBF29"/>
+<path id="Vector_9" d="M103.5 122C106.538 122 109 119.538 109 116.5C109 113.462 106.538 111 103.5 111C100.462 111 98 113.462 98 116.5C98 119.538 100.462 122 103.5 122Z" fill="#59CCF5"/>
+<path id="Vector_10" d="M71 71.9001C58.8756 61.9552 46.7513 79.6351 71 94C95.2487 79.6351 83.1244 61.9552 71 71.9001Z" fill="#FF4F77" stroke="white" stroke-width="3"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_0_13">
+<rect width="150" height="150" rx="16" fill="white"/>
+</clipPath>
+</defs>
+</svg>

@@ -434,6 +434,14 @@ function formatLedgerTime(value) {
   }).format(date);
 }
 
+function formatRewardTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('zh-CN', {
+    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+  }).format(date).replace('/', '月').replace(',', '日');
+}
+
 function isToday(value) {
   const date = new Date(value);
   const today = new Date();
@@ -801,10 +809,17 @@ function header(title) {
           <div class="home-top-welcome">
             <h1>欢迎，${homeDisplayName}！</h1>
           </div>
-          <button class="home-star-balance" data-action="open-star-bill" aria-label="查看星星账单">
-            <img src="assets/figma-home-10-3/star-face.svg" alt="">
+          <button class="happy-pill-button home-parent-entry" data-action="switch-role">切换家长端</button>
+        </header>`;
+    }
+    if (state.screen === 'rewards') {
+      return `
+        <header class="topbar child-topbar primary-topbar reward-topbar">
+          <button class="reward-star-balance" data-action="open-star-bill" aria-label="查看星星账单，当前 ${state.stars} 颗星">
+            <img src="assets/reward-ui/star-balance.svg" alt="">
             <strong>${state.stars}</strong>
           </button>
+          <button class="happy-pill-button reward-parent-entry" data-action="switch-role">切换家长端</button>
         </header>`;
     }
     return `
@@ -860,7 +875,7 @@ function childHome() {
           <img src="assets/home-ui/happy-home-hero-v2.png" alt="黑白奶牛猫、紫色变色龙和鹦鹉在草地上欢迎你">
           <p class="home-hero-tagline">今天也要开心学英语呀！</p>
         </div>
-        <button class="primary home-start-button" data-action="start-next" ${nextTask ? '' : 'disabled'}>${nextTask ? startLabel : '今日任务已完成'}</button>
+        <button class="primary happy-button happy-button-primary home-start-button" data-action="start-next" ${nextTask ? '' : 'disabled'}>${nextTask ? startLabel : '今日任务已完成'}</button>
       </section>
       <section class="metrics compact-metrics home-metrics">
         <div class="card metric home-progress-card">
@@ -873,9 +888,9 @@ function childHome() {
         </div>
       </section>
       <div class="row home-section-heading"><h2 class="section-title">今日任务</h2><strong>约 ${state.settings.dailyMinutes} 分钟</strong></div>
-      <section class="home-task-list">${taskRows(tasks)}</section>
+      <section class="happy-surface-card home-task-list">${taskRows(tasks)}</section>
       <div class="row home-section-heading review-heading"><h2 class="section-title">今日复习任务</h2><strong>约 ${reviewMinutes} 分钟</strong></div>
-      <section class="home-task-list home-review-list">
+      <section class="happy-surface-card home-task-list home-review-list">
         ${reviewTasks.length ? taskRows(reviewTasks) : '<div class="empty">今天暂时没有复习内容</div>'}
       </section>
     </main>
@@ -1050,27 +1065,55 @@ function taskScreen() {
 function rewardsScreen() {
   const rewardsContent = state.rewards.length
     ? state.rewards.map(reward => {
-        const request = state.rewardRequests.find(item => item.rewardId === reward.id && item.status === '待审批');
-        return `<article class="card reward-product-card">
-          <div class="reward-product-image">${reward.image ? `<img src="${reward.image}" alt="${escapeHtml(reward.title)}">` : '<span>奖品图片</span>'}</div>
-          <h2>${escapeHtml(reward.title)}</h2>
-          ${reward.note ? `<p class="reward-product-note">${escapeHtml(reward.note)}</p>` : ''}
-          <div class="reward-product-action">
-            <strong>☆ ${reward.cost}</strong>
-            <button class="primary" data-action="request-reward" data-id="${reward.id}" ${request || state.stars < reward.cost ? 'disabled' : ''}>${request ? '待家长确认' : state.stars < reward.cost ? `还差 ${reward.cost - state.stars} 颗星` : '申请兑换'}</button>
+        const approvedRequest = state.rewardRequests.find(item => item.rewardId === reward.id && item.status === '已同意');
+        const pendingRequest = state.rewardRequests.find(item => item.rewardId === reward.id && item.status === '待审批');
+        const isRedeemed = Boolean(approvedRequest);
+        const isPending = Boolean(pendingRequest);
+        const isInsufficient = !isRedeemed && !isPending && state.stars < reward.cost;
+        const cardState = isRedeemed ? 'is-redeemed' : isPending ? 'is-pending' : isInsufficient ? 'is-insufficient' : 'is-available';
+        const buttonLabel = isRedeemed
+          ? '已兑换'
+          : isPending
+            ? '等待确认'
+            : isInsufficient
+              ? `还差 ${reward.cost - state.stars} 星`
+              : '立即兑换';
+        const rewardTime = isRedeemed ? formatRewardTime(approvedRequest.reviewedAt || approvedRequest.updatedAt) : '';
+        return `<article class="reward-product-card ${cardState}" data-reward-state="${cardState}">
+          <div class="reward-product-image">
+            <img src="${reward.image || 'assets/reward-ui/gift.svg'}" alt="${escapeHtml(reward.title)}">
+          </div>
+          <div class="reward-product-copy">
+            ${isRedeemed ? '<span class="reward-state-badge">已兑换</span>' : ''}
+            <h2>${escapeHtml(reward.title)}</h2>
+            <p class="reward-product-note">${escapeHtml(reward.note || '完成学习后，可以兑换这份小惊喜')}</p>
+            ${rewardTime ? `<time class="reward-redeemed-time" datetime="${escapeHtml(approvedRequest.reviewedAt || approvedRequest.updatedAt)}">已兑换于 ${rewardTime}</time>` : ''}
+            <div class="reward-product-action">
+              <strong><img src="assets/reward-ui/star-cost.svg" alt="">${reward.cost}</strong>
+              <button class="reward-exchange-button ${isRedeemed || isPending || isInsufficient ? 'is-disabled' : ''}" data-action="request-reward" data-id="${reward.id}" ${isRedeemed || isPending || isInsufficient ? 'disabled' : ''}>${buttonLabel}</button>
+            </div>
           </div>
         </article>`;
       }).join('')
-    : `<section class="card reward-empty-state">
-        <div class="reward-empty-illustration" aria-hidden="true"><span>☆</span><span>🎁</span><span>☆</span></div>
+    : `<section class="reward-empty-state">
+        <img src="assets/reward-ui/gift.svg" alt="彩色礼物盒">
         <h2>奖品正在准备中</h2>
-        <p>请爸爸妈妈来添加喜欢的奖品吧！你可以先继续学习、收集星星。</p>
-        <button class="primary" data-action="open-parent-reward-settings">请家长来设置</button>
+        <p>请爸爸妈妈来添加喜欢的奖品吧！<br>你可以先继续学习、收集星星。</p>
+        <button class="reward-exchange-button" data-action="open-parent-reward-settings">请家长来设置</button>
       </section>`;
   return `
     ${header('奖品兑换')}
-    <main class="screen reward-grid">
-      ${rewardsContent}
+    <main class="screen child-rewards-screen">
+      <section class="reward-hero">
+        <div class="reward-hero-copy">
+          <h1>奖品兑换</h1>
+          <p>用努力收集的星星，换一份小惊喜吧！</p>
+          <span>每一颗星，都是努力的记录</span>
+        </div>
+        <img src="assets/reward-ui/gift.svg" alt="礼物盒">
+      </section>
+      <h2 class="visually-hidden">为你准备的奖励，共 ${state.rewards.length} 份</h2>
+      <section class="reward-grid">${rewardsContent}</section>
     </main>
     ${childNav('rewards')}`;
 }
@@ -1097,17 +1140,17 @@ function starBillScreen() {
 }
 
 function childNav(active) {
-  const visualHomeNav = active === 'home';
-  const items = visualHomeNav
+  const visualChildNav = ['home', 'rewards'].includes(active);
+  const items = visualChildNav
     ? [
-      ['home', '首页', 'assets/figma-home-10-3/nav-home.svg'],
-      ['units', '闯关', 'assets/figma-home-10-3/nav-challenge.svg'],
-      ['rewards', '商城', 'assets/figma-home-10-3/nav-shop.svg']
+      ['home', '首页', active === 'rewards' ? 'assets/reward-ui/nav-home.svg' : 'assets/figma-home-10-3/nav-home.svg'],
+      ['units', '闯关', active === 'rewards' ? 'assets/reward-ui/nav-challenge.svg' : 'assets/figma-home-10-3/nav-challenge.svg'],
+      ['rewards', '商城', active === 'rewards' ? 'assets/reward-ui/nav-shop.svg' : 'assets/figma-home-10-3/nav-shop.svg']
     ]
     : [
       ['home', '首页', '□'], ['units', '闯关', '▦'], ['rewards', '奖励', '☆']
     ];
-  return `<nav class="bottom-nav three-items ${visualHomeNav ? 'home-bottom-nav' : ''}" aria-label="儿童端导航">${items.map(([id, label, icon]) => `<button class="nav-item ${active === id ? 'active' : ''}" data-action="nav" data-screen="${id}">${visualHomeNav ? `<img src="${icon}" alt="">` : `<span>${icon}</span>`}${label}</button>`).join('')}</nav>`;
+  return `<nav class="bottom-nav three-items ${visualChildNav ? 'home-bottom-nav happy-bottom-nav' : ''}" aria-label="儿童端导航">${items.map(([id, label, icon]) => `<button class="nav-item ${active === id ? 'active' : ''}" data-action="nav" data-screen="${id}">${visualChildNav ? `<img src="${icon}" alt="">` : `<span>${icon}</span>`}${label}</button>`).join('')}</nav>`;
 }
 
 function parentHome() {
@@ -1346,12 +1389,14 @@ function parentNav(active) {
 function requestPassword(destination = null) {
   const targetRole = destination?.role || (state.role === 'child' ? 'parent' : 'child');
   pendingRoleDestination = destination;
-  overlayRoot.innerHTML = `<div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="password-title">
-    <h2 id="password-title">切换到${targetRole === 'parent' ? '家长端' : '儿童端'}</h2>
-    <p>请输入切换密码。</p>
-    <label class="field">密码<input id="role-password" type="password" inputmode="numeric" maxlength="6" autocomplete="off"></label>
-    <div id="password-error" class="error"></div>
-    <div class="button-row"><button class="secondary" data-action="close-overlay">取消</button><button class="primary" data-action="confirm-role" data-role="${targetRole}">确认切换</button></div>
+  overlayRoot.innerHTML = `<div class="overlay happy-role-overlay"><section class="dialog happy-role-dialog" role="dialog" aria-modal="true" aria-labelledby="password-title" aria-describedby="password-hint">
+    <h2 id="password-title">切换${targetRole === 'parent' ? '家长端' : '儿童端'}</h2>
+    <p id="password-hint">请输入家长密码</p>
+    <label class="happy-password-label" for="role-password"><span class="visually-hidden">家长密码</span>
+      <input id="role-password" type="password" inputmode="numeric" maxlength="6" autocomplete="off" aria-describedby="password-error">
+    </label>
+    <div id="password-error" class="error happy-password-error" role="alert"></div>
+    <div class="happy-dialog-actions"><button class="secondary" data-action="close-overlay">取消</button><button class="primary" data-action="confirm-role" data-role="${targetRole}">确认</button></div>
   </section></div>`;
   setTimeout(() => document.getElementById('role-password')?.focus(), 0);
 }
@@ -1388,9 +1433,11 @@ function decideReward(requestId, decision) {
   if (decision === 'approve' && reward && state.stars >= reward.cost) {
     recordStarChange(-reward.cost, `兑换奖品：${reward.title}`);
     request.status = '已同意';
+    request.reviewedAt = new Date().toISOString();
     showToast('已批准，星星已扣除');
   } else {
     request.status = '已拒绝';
+    request.reviewedAt = new Date().toISOString();
     showToast('已拒绝，不扣星星');
   }
   save();
@@ -1405,7 +1452,8 @@ function render() {
   const fallback = state.role === 'child' ? childHome : parentHome;
   const isInnerScreen = state.role === 'child' && ['unit', 'challengeStage', 'task', 'starBill'].includes(state.screen);
   const isChildHome = state.role === 'child' && state.screen === 'home';
-  app.innerHTML = `<div class="app-shell ${isInnerScreen ? 'inner-shell' : ''} ${isChildHome ? 'child-home-shell' : ''}">${systemStatusBar()}${(screens[state.screen] || fallback)()}</div>`;
+  const isChildRewards = state.role === 'child' && state.screen === 'rewards';
+  app.innerHTML = `<div class="app-shell ${isInnerScreen ? 'inner-shell' : ''} ${isChildHome ? 'child-home-shell' : ''} ${isChildRewards ? 'child-rewards-shell' : ''}">${systemStatusBar()}${(screens[state.screen] || fallback)()}</div>`;
 
   if (['settings', 'parentSettings'].includes(state.screen)) {
     const form = document.getElementById('settings-form');

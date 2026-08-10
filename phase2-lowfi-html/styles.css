@@ -297,6 +297,32 @@ button { cursor: pointer; }
 .reward-product-action > strong { font-size: 24px; white-space: nowrap; }
 .reward-product-action .primary { min-width: 132px; }
 
+.reward-empty-state {
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 44px 28px;
+  text-align: center;
+}
+
+.reward-empty-illustration {
+  min-height: 124px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 48px;
+}
+
+.reward-empty-illustration span:first-child,
+.reward-empty-illustration span:last-child { font-size: 34px; color: #777; }
+.reward-empty-state h2 { margin: 0; font-size: 26px; }
+.reward-empty-state p { max-width: 290px; margin: 0; color: var(--muted); font-size: 17px; line-height: 1.65; }
+.reward-empty-state .primary { width: 100%; max-width: 300px; margin-top: 8px; }
+
 .ledger-summary { margin-bottom: 20px; }
 .ledger-list { padding: 0 16px; }
 .ledger-row { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }

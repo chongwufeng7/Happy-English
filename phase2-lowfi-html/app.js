@@ -46,11 +46,23 @@ const units = [
   }
 ];
 
-const defaultRewards = [
+const legacyDefaultRewards = [
   { id: 'r1', title: '今晚选择睡前故事', cost: 12, note: '睡前可以自己挑选一本喜欢的故事书。', image: '' },
   { id: 'r2', title: '周末一起去公园', cost: 30, note: '由家长安排合适的周末时间。', image: '' },
   { id: 'r3', title: '选择一次家庭游戏', cost: 20, note: '从家里的亲子游戏中选择一项。', image: '' }
 ];
+
+function isLegacyDefaultRewards(items) {
+  if (!Array.isArray(items) || items.length !== legacyDefaultRewards.length) return false;
+  return legacyDefaultRewards.every(seed => {
+    const item = items.find(candidate => candidate.id === seed.id);
+    return item
+      && item.title === seed.title
+      && Number(item.cost) === seed.cost
+      && (item.note || '') === seed.note
+      && !item.image;
+  });
+}
 
 const challengeUnits = {
   u1: {
@@ -137,9 +149,9 @@ function freshState() {
     assignedReviewUnitIds: [],
     assignedReviewTaskIds: []
   };
-  const initialRewards = defaultRewards.map(item => ({ ...item }));
+  const initialRewards = [];
   return {
-    version: 4,
+    version: 5,
     role: 'child',
     screen: 'home',
     currentUnitId: 'u1',
@@ -221,9 +233,12 @@ function loadState() {
     );
     const activeLearning = learningByChildId[activeChildId] || {};
     const activeSavedSettings = activeLearning.settings || savedSettings;
-    const activeRewards = Array.isArray(activeLearning.rewards)
+    const loadedRewards = Array.isArray(activeLearning.rewards)
       ? activeLearning.rewards
       : Array.isArray(saved.rewards) ? saved.rewards : base.rewards;
+    const activeRewards = Number(saved.version || 1) < 5 && isLegacyDefaultRewards(loadedRewards)
+      ? []
+      : loadedRewards;
     return {
       ...base,
       ...saved,
@@ -351,6 +366,7 @@ let challengeAudioUrl = null;
 let pendingChildAvatar = null;
 let pendingRewardImage = null;
 let editingRewardId = null;
+let pendingRoleDestination = null;
 
 const app = document.getElementById('app');
 const overlayRoot = document.getElementById('overlay-root');
@@ -1032,10 +1048,8 @@ function taskScreen() {
 }
 
 function rewardsScreen() {
-  return `
-    ${header('奖品兑换')}
-    <main class="screen reward-grid">
-      ${state.rewards.map(reward => {
+  const rewardsContent = state.rewards.length
+    ? state.rewards.map(reward => {
         const request = state.rewardRequests.find(item => item.rewardId === reward.id && item.status === '待审批');
         return `<article class="card reward-product-card">
           <div class="reward-product-image">${reward.image ? `<img src="${reward.image}" alt="${escapeHtml(reward.title)}">` : '<span>奖品图片</span>'}</div>
@@ -1046,7 +1060,17 @@ function rewardsScreen() {
             <button class="primary" data-action="request-reward" data-id="${reward.id}" ${request || state.stars < reward.cost ? 'disabled' : ''}>${request ? '待家长确认' : state.stars < reward.cost ? `还差 ${reward.cost - state.stars} 颗星` : '申请兑换'}</button>
           </div>
         </article>`;
-      }).join('')}
+      }).join('')
+    : `<section class="card reward-empty-state">
+        <div class="reward-empty-illustration" aria-hidden="true"><span>☆</span><span>🎁</span><span>☆</span></div>
+        <h2>奖品正在准备中</h2>
+        <p>请爸爸妈妈来添加喜欢的奖品吧！你可以先继续学习、收集星星。</p>
+        <button class="primary" data-action="open-parent-reward-settings">请家长来设置</button>
+      </section>`;
+  return `
+    ${header('奖品兑换')}
+    <main class="screen reward-grid">
+      ${rewardsContent}
     </main>
     ${childNav('rewards')}`;
 }
@@ -1307,7 +1331,7 @@ function parentSettingsScreen() {
         <button class="settings-tab ${tab === 'content' ? 'active' : ''}" data-action="set-parent-settings-tab" data-tab="content" role="tab" aria-selected="${tab === 'content'}">教材内容</button>
       </div>
       <section class="settings-tab-panel">${tab === 'child' ? childPanel : tab === 'reward' ? rewardSettingsPanel() : contentModelPanel()}</section>
-      <footer class="settings-version"><strong>V1.0</strong><span>提醒：教材内容仍处于准备阶段，正式制作前需复核教材及授权。</span></footer>
+      <footer class="settings-version"><strong>V1.1</strong><span>提醒：教材内容仍处于准备阶段，正式制作前需复核教材及授权。</span></footer>
     </main>
     ${parentNav('parentSettings')}`;
 }
@@ -1319,8 +1343,9 @@ function parentNav(active) {
   return `<nav class="bottom-nav three-items" aria-label="家长端导航">${items.map(([id, label, icon]) => `<button class="nav-item ${active === id ? 'active' : ''}" data-action="nav" data-screen="${id}"><span>${icon}</span>${label}</button>`).join('')}</nav>`;
 }
 
-function requestPassword() {
-  const targetRole = state.role === 'child' ? 'parent' : 'child';
+function requestPassword(destination = null) {
+  const targetRole = destination?.role || (state.role === 'child' ? 'parent' : 'child');
+  pendingRoleDestination = destination;
   overlayRoot.innerHTML = `<div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="password-title">
     <h2 id="password-title">切换到${targetRole === 'parent' ? '家长端' : '儿童端'}</h2>
     <p>请输入切换密码。</p>
@@ -1409,6 +1434,9 @@ document.addEventListener('click', event => {
     save();
     render();
   }
+  if (action === 'open-parent-reward-settings') {
+    requestPassword({ role: 'parent', screen: 'parentSettings', parentSettingsTab: 'reward' });
+  }
   if (action === 'add-reward') {
     editingRewardId = 'new';
     pendingRewardImage = null;
@@ -1448,7 +1476,10 @@ document.addEventListener('click', event => {
   }
   if (action === 'switch-role') requestPassword();
   if (action === 'show-challenge-rules') showChallengeRules();
-  if (action === 'close-overlay') overlayRoot.innerHTML = '';
+  if (action === 'close-overlay') {
+    overlayRoot.innerHTML = '';
+    pendingRoleDestination = null;
+  }
   if (action === 'confirm-role') {
     const input = document.getElementById('role-password');
     const error = document.getElementById('password-error');
@@ -1457,8 +1488,13 @@ document.addEventListener('click', event => {
       input?.focus();
       return;
     }
+    const destination = pendingRoleDestination?.role === role ? pendingRoleDestination : null;
     state.role = role;
-    state.screen = role === 'parent' ? 'parentHome' : 'home';
+    state.screen = destination?.screen || (role === 'parent' ? 'parentHome' : 'home');
+    if (role === 'parent' && destination?.parentSettingsTab) {
+      state.parentSettingsTab = destination.parentSettingsTab;
+    }
+    pendingRoleDestination = null;
     overlayRoot.innerHTML = '';
     save();
     render();

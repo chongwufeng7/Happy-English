@@ -1988,3 +1988,146 @@ button.challenge-theme-card:active { transform: scale(.99); }
   .app-shell { margin-top: 24px; min-height: calc(100dvh - 48px); box-shadow: 0 10px 36px rgba(0,0,0,.16); }
   .bottom-nav { bottom: 24px; }
 }
+
+/* V1.2 lifecycle and result states */
+.onboarding-shell {
+  background: linear-gradient(180deg, #e4f7ff 0, #fffaf1 46%, #fffaf1 100%);
+}
+
+.onboarding-screen {
+  min-height: 820px;
+  padding: 22px 18px 40px;
+}
+
+.onboarding-hero {
+  padding: 26px 22px;
+  text-align: center;
+  background: linear-gradient(145deg, #5dccf5, #9be4fa);
+  border: 0;
+}
+
+.onboarding-kicker {
+  color: #16699a;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.onboarding-hero h1 {
+  margin: 10px 0 8px;
+  color: var(--happy-color-text-primary);
+  font-size: 27px;
+  line-height: 1.35;
+}
+
+.onboarding-hero p,
+.onboarding-privacy {
+  color: var(--happy-color-text-secondary);
+  line-height: 1.65;
+}
+
+.onboarding-form-card {
+  margin-top: 16px;
+  padding: 24px 20px;
+}
+
+.onboarding-avatar {
+  display: grid;
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 18px;
+  place-items: center;
+}
+
+.onboarding-avatar .child-avatar-preview {
+  width: 92px;
+  height: 92px;
+  border: 3px solid #fff;
+  box-shadow: 0 6px 18px rgba(50, 139, 192, .18);
+}
+
+.onboarding-avatar small { font-size: 11px; }
+
+.initial-state-note {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  color: var(--happy-color-text-secondary);
+  background: #fff8df;
+  border-radius: 16px;
+  font-size: 13px;
+}
+
+.initial-state-note strong { color: var(--happy-color-text-primary); }
+.onboarding-privacy { margin: 18px 12px 0; font-size: 12px; text-align: center; }
+
+.system-notice {
+  margin: 10px 14px 0;
+  padding: 13px 14px;
+  color: #6e381f;
+  background: #fff1c9;
+  border: 1px solid #f0c75a;
+  border-radius: 16px;
+}
+
+.system-notice p { margin: 4px 0 8px; font-size: 13px; line-height: 1.5; }
+.system-notice .text-button { min-height: 34px; padding: 4px 8px; }
+
+.learning-state-card {
+  display: grid;
+  gap: 5px;
+  margin: 13px 14px;
+  padding: 15px 18px;
+  color: #365e10;
+  background: #effbd8;
+  border: 1px solid #cde89b;
+  border-radius: 18px;
+}
+
+.learning-state-card strong { font-size: 17px; }
+.learning-state-card span { font-size: 13px; line-height: 1.55; }
+.learning-state-card.no-learning-state { color: #6d5222; background: #fff4d5; border-color: #f0d17a; }
+.learning-state-card.course-complete,
+.learning-state-card.all-islands-complete { color: #4d3988; background: #f1ecff; border-color: #cabdf3; }
+
+.completion-dialog { text-align: center; }
+.completion-symbol { color: #ffb713; font-size: 46px; letter-spacing: 4px; text-shadow: 0 3px 0 #fff1b4; }
+.completion-dialog h2 { margin: 6px 0 8px; }
+.completion-dialog p { color: var(--happy-color-text-secondary); line-height: 1.65; }
+.dialog-action-stack { display: grid; gap: 10px; margin-top: 18px; }
+.dialog-action-stack > button { width: 100%; }
+
+.reward-confirm-dialog > img {
+  display: block;
+  width: 104px;
+  height: 104px;
+  margin: -4px auto 10px;
+  object-fit: contain;
+}
+
+.reward-confirm-dialog { text-align: center; }
+.reward-confirm-summary { display: grid; gap: 8px; margin: 14px 0; }
+.reward-confirm-summary > div { display: flex; justify-content: space-between; padding: 10px 12px; background: #fff7df; border-radius: 12px; }
+.reward-confirm-summary dt { color: var(--happy-color-text-secondary); }
+.reward-confirm-summary dd { margin: 0; color: var(--happy-color-text-primary); font-weight: 900; }
+
+.reward-product-card.is-rejected,
+.reward-product-card.is-approval-failed { min-height: 194px; }
+.reward-product-card.is-rejected .reward-state-badge { color: #8d5b17; background: #fff0bf; }
+.reward-product-card.is-approval-failed .reward-state-badge { color: #9b4139; background: #ffe0dc; }
+.reward-product-card.is-rejected h2,
+.reward-product-card.is-approval-failed h2 { padding-right: 112px; }
+.reward-request-result { margin: 2px 0 0; color: #9b6b48; font-size: 10px; line-height: 14px; }
+
+.reward-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--happy-color-border-subtle);
+}
+
+.reward-history-row:last-child { border-bottom: 0; }
+.reward-history-row p { margin: 4px 0 0; color: var(--happy-color-text-secondary); font-size: 12px; }
+.status.warning { color: #9b4139; background: #ffe0dc; }

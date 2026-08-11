@@ -1528,7 +1528,7 @@ function parentSettingsScreen() {
         <button class="settings-tab ${tab === 'content' ? 'active' : ''}" data-action="set-parent-settings-tab" data-tab="content" role="tab" aria-selected="${tab === 'content'}">教材内容</button>
       </div>
       <section class="settings-tab-panel">${tab === 'child' ? childPanel : tab === 'reward' ? rewardSettingsPanel() : contentModelPanel()}</section>
-      <footer class="settings-version"><strong>V1.2</strong><span>提醒：教材内容仍处于准备阶段，正式制作前需复核教材及授权。</span></footer>
+      <footer class="settings-version"><strong>V1.3</strong><span>提醒：教材内容仍处于准备阶段，正式制作前需复核教材及授权。</span></footer>
     </main>
     ${parentNav('parentSettings')}`;
 }

@@ -1191,7 +1191,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
 .home-topbar {
   position: sticky;
   min-height: 56px;
-  padding: 8px 15px 7px;
+  padding: 8px 14px;
   color: var(--home-brown);
   background: var(--home-cream);
   border-bottom: 0;
@@ -1204,7 +1204,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
   font-size: 24px;
   font-weight: 900;
   line-height: 1;
-  letter-spacing: -.54px;
+  letter-spacing: -1px;
 }
 
 .home-parent-entry {
@@ -1242,12 +1242,12 @@ button.challenge-theme-card:active { transform: scale(.99); }
 }
 
 .home-star-balance img { width: 21px; height: 20px; object-fit: contain; }
-.home-star-balance strong { font-size: 20.5px; font-weight: 900; line-height: 1; }
+.home-star-balance strong { font-size: 20px; font-weight: 900; line-height: 1; }
 .home-star-balance:active { transform: scale(.97); }
 .home-star-balance:focus-visible { outline: 3px solid #247dbe; outline-offset: 2px; }
 
 .child-home-screen {
-  padding: 0 13.4px 92px;
+  padding: 0 14px 96px;
   background: var(--home-cream);
 }
 
@@ -1260,14 +1260,13 @@ button.challenge-theme-card:active { transform: scale(.99); }
 .home-hero-card {
   position: relative;
   width: 100%;
-  height: auto;
-  aspect-ratio: 363.2 / 253;
+  height: 205px;
   overflow: hidden;
   margin: 0;
   border: 0;
   border-radius: 24px;
   background: var(--home-blue);
-  box-shadow: 0 4.5px 0 #d9eef4;
+  box-shadow: 0 5px 0 #d9eef4;
 }
 
 .home-hero-card > img {
@@ -1303,17 +1302,17 @@ button.challenge-theme-card:active { transform: scale(.99); }
   width: 51.2%;
   min-width: 176px;
   max-width: 207px;
-  min-height: 50px;
-  height: 50px;
+  min-height: 48px;
+  height: 48px;
   margin: 0;
   transform: translateX(-50%);
   color: var(--home-brown);
   background: var(--home-yellow);
-  border: 2.4px solid #fff3cb;
+  border: 2px solid #fff3cb;
   border-radius: 999px;
-  font-size: 21.5px;
+  font-size: 22px;
   font-weight: 900;
-  box-shadow: 0 4.5px 0 #eda70f, 0 8px 13px rgba(203, 135, 9, .18);
+  box-shadow: 0 5px 0 #eda70f, 0 8px 13px rgba(203, 135, 9, .18);
 }
 
 .home-start-button:active { transform: translate(-50%, 3px); box-shadow: 0 2px 0 #eda70f; }
@@ -1321,9 +1320,9 @@ button.challenge-theme-card:active { transform: scale(.99); }
 
 .child-home-shell .home-metrics {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10.7px;
+  gap: 15px;
   height: 90px;
-  margin: 18px 0 0;
+  margin: 22px 0 0;
 }
 
 .child-home-shell .home-metrics .metric {
@@ -1332,14 +1331,14 @@ button.challenge-theme-card:active { transform: scale(.99); }
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  gap: 7.1px;
+  gap: 7px;
   min-height: 90px;
   height: 90px;
-  padding: 10.7px 13.4px;
+  padding: 10px 13px;
   overflow: hidden;
-  border-width: 1.8px;
-  border-radius: 21.4px;
-  box-shadow: 0 3.6px 0 rgba(75, 37, 24, .05);
+  border-width: 2px;
+  border-radius: 21px;
+  box-shadow: 0 4px 0 rgba(75, 37, 24, .05);
 }
 
 .child-home-shell .home-metrics .metric-line {
@@ -1347,7 +1346,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
   z-index: 1;
   display: grid;
   justify-content: start;
-  gap: 3.5px;
+  gap: 4px;
 }
 
 .child-home-shell .home-metrics .metric-line span {
@@ -1360,7 +1359,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
 .child-home-shell .home-metrics .metric-line strong {
   color: #247bc0;
   margin: 0;
-  font-size: 35.7px;
+  font-size: 36px;
   font-weight: 700;
   line-height: 34px;
 }
@@ -1380,23 +1379,23 @@ button.challenge-theme-card:active { transform: scale(.99); }
 .child-home-shell .home-star-card .metric-line strong { color: #f47c16; }
 
 .home-section-heading {
-  height: 46px;
+  height: 60px;
   margin: 0;
-  padding: 0 3.6px 7.1px;
+  padding: 0 4px 12px;
   align-items: flex-end;
 }
 
 .home-section-heading .section-title {
   margin: 0;
   color: var(--home-brown);
-  font-size: 20.5px;
+  font-size: 21px;
   font-weight: 700;
 }
 
 .home-section-heading > strong {
-  padding-bottom: 1.8px;
+  padding-bottom: 2px;
   color: var(--home-brown);
-  font-size: 14.3px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -1409,21 +1408,21 @@ button.challenge-theme-card:active { transform: scale(.99); }
   border-width: .6px;
 }
 .home-task-row {
-  min-height: 68px;
-  height: 68px;
-  padding: 0 13.4px;
-  gap: 10.7px;
+  min-height: 78px;
+  height: 78px;
+  padding: 0 13px;
+  gap: 11px;
   background: transparent;
   border: 0;
   border-radius: 0;
   box-shadow: none;
 }
 
-.home-task-row + .home-task-row { border-top: .6px solid #eadfd3; }
+.home-task-row + .home-task-row { border-top: 1px solid #eadfd3; }
 .home-task-icon {
-  flex: 0 0 51.8px;
-  width: 51.8px;
-  height: 51.8px;
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
   object-fit: cover;
   border-radius: 50%;
 }
@@ -1432,16 +1431,16 @@ button.challenge-theme-card:active { transform: scale(.99); }
 .home-task-row .task-copy h3 {
   margin-bottom: 1px;
   color: var(--home-brown);
-  font-size: 18.8px;
+  font-size: 19px;
   font-weight: 700;
-  line-height: 20.6px;
+  line-height: 21px;
 }
 
 .home-task-row .task-copy p {
   color: #795b4d;
-  font-size: 14.3px;
+  font-size: 14px;
   font-weight: 700;
-  line-height: 19.6px;
+  line-height: 20px;
 }
 
 .home-task-row .status {
@@ -1560,15 +1559,15 @@ button.challenge-theme-card:active { transform: scale(.99); }
   justify-content: center;
   gap: 2px;
   padding: 1px 5px;
-  font-size: 13.4px;
+  font-size: 13px;
   font-weight: 900;
 }
 
 .child-home-shell .home-bottom-nav .nav-item::before { display: none; }
 .child-home-shell .home-bottom-nav .nav-item img {
   display: block;
-  width: 30.4px;
-  height: 30.4px;
+  width: 30px;
+  height: 30px;
   margin: 0;
   object-fit: contain;
 }
@@ -1620,7 +1619,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
   background: rgba(255, 255, 255, .94);
   border: 1px solid #f1e6d8;
   border-radius: var(--happy-radius-pill);
-  box-shadow: var(--happy-shadow-card);
+  box-shadow: 0 5px 13px rgba(75, 37, 24, .09);
 }
 
 .reward-star-balance::after {
@@ -1664,11 +1663,11 @@ button.challenge-theme-card:active { transform: scale(.99); }
   position: relative;
   height: 116px;
   overflow: hidden;
-  margin: 0 0 18px;
+  margin: 0 0 22px;
   color: var(--happy-color-text-primary);
   background: var(--happy-color-bg-hero);
   border-radius: 28px;
-  box-shadow: var(--happy-shadow-card);
+  box-shadow: 0 5px 13px rgba(75, 37, 24, .09);
 }
 
 .reward-hero-copy {
@@ -1718,7 +1717,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
 
 .child-rewards-shell .reward-grid {
   display: grid;
-  gap: 20px;
+  gap: 24px;
 }
 
 .child-rewards-shell .reward-product-card {
@@ -1734,7 +1733,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
   background: var(--happy-color-bg-surface);
   border: 1px solid var(--happy-color-border-subtle);
   border-radius: 24px;
-  box-shadow: var(--happy-shadow-card);
+  box-shadow: 0 5px 13px rgba(75, 37, 24, .09);
 }
 
 .child-rewards-shell .reward-product-image {
@@ -1851,20 +1850,20 @@ button.challenge-theme-card:active { transform: scale(.99); }
 }
 
 .reward-product-card.is-redeemed {
-  height: 170px;
+  height: 178px;
   opacity: .64;
-  background: #f2f2f0;
-  filter: saturate(.15);
+  background: var(--happy-color-bg-surface);
 }
 
 .reward-product-card.is-redeemed .reward-product-image {
-  width: 122px;
-  height: 92px;
-  margin: 8px 14px 0 0;
-  background: transparent;
+  width: 150px;
+  height: 150px;
+  margin: 0;
+  background: #f8efd5;
+  border-radius: 16px;
 }
 
-.reward-product-card.is-redeemed .reward-product-copy { margin-left: -28px; }
+.reward-product-card.is-redeemed .reward-product-copy { margin-left: 2px; }
 
 .reward-state-badge {
   position: absolute;
@@ -1882,11 +1881,23 @@ button.challenge-theme-card:active { transform: scale(.99); }
   text-align: center;
 }
 
-.reward-product-card.is-redeemed h2 { padding-right: 76px; color: #4d4d4d; }
-.reward-product-card.is-redeemed .reward-product-note { padding-right: 4px; color: #7a7a7a; }
-.reward-product-card.is-redeemed .reward-product-action { grid-template-columns: 58px 132px; gap: 8px; align-items: end; }
+.reward-product-card.is-redeemed .reward-state-badge { display: none; }
+.reward-product-card.is-redeemed h2 { padding-right: 0; color: #7a7a7a; }
+.reward-product-card.is-redeemed .reward-product-note {
+  height: 17px;
+  padding-right: 0;
+  color: #7a7a7a;
+  -webkit-line-clamp: 1;
+}
+.reward-product-card.is-redeemed .reward-redeemed-time {
+  margin-top: 2px;
+  color: #7a7a7a;
+  font-size: 10px;
+  line-height: 12px;
+}
+.reward-product-card.is-redeemed .reward-product-action { gap: 6px; align-items: end; }
 .reward-product-card.is-redeemed .reward-product-action > strong { color: #7a7a7a; }
-.reward-product-card.is-redeemed .reward-exchange-button { width: 132px; }
+.reward-product-card.is-redeemed .reward-exchange-button { width: 148px; }
 
 .child-rewards-shell .reward-empty-state {
   min-height: 356px;
@@ -1901,7 +1912,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
   background: rgba(255, 255, 255, .94);
   border: 1px solid var(--happy-color-border-subtle);
   border-radius: 24px;
-  box-shadow: var(--happy-shadow-card);
+  box-shadow: 0 5px 13px rgba(75, 37, 24, .09);
 }
 
 .child-rewards-shell .reward-empty-state > img {
@@ -1947,7 +1958,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
   gap: 2px;
   padding: 1px 5px;
   border-radius: 18px;
-  font-size: 13.4px;
+  font-size: 13px;
   font-weight: 900;
 }
 
@@ -1955,8 +1966,8 @@ button.challenge-theme-card:active { transform: scale(.99); }
 
 .child-rewards-shell .happy-bottom-nav .nav-item img {
   display: block;
-  width: 30.4px;
-  height: 30.4px;
+  width: 30px;
+  height: 30px;
   margin: 0;
   object-fit: contain;
 }

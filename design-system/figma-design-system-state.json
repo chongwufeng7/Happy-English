@@ -2,8 +2,8 @@
   "runId": "happy-english-design-system-20260809-v1",
   "fileKey": "7jlwkShHhHp16CKrJ58kiN",
   "sourceNodeId": "10:3",
-  "phase": "phase3",
-  "step": "P3.c-component-library-complete",
+  "phase": "phase4",
+  "step": "PA.f-batch-a-complete",
   "specFile": "Happy英语_UI设计规范_20260809_V1.0.md",
   "entities": {
     "collections": {
@@ -36,7 +36,12 @@
       "rewardCard": "137:2",
       "rewardEmptyState": "138:14",
       "parentSwitchDialog": "139:2",
-      "rewardStatusBadge": "139:25"
+      "rewardStatusBadge": "139:25",
+      "learningControls": "144:2",
+      "learningInteraction": "150:2",
+      "childPageFeedback": "154:2",
+      "onboardingForm": "160:70",
+      "childScreensBatchA": "166:18"
     },
     "components": {
       "button": "48:2",
@@ -49,9 +54,37 @@
       "rewardCard": "137:182",
       "rewardEmptyState": "138:15",
       "parentSwitchDialog": "139:22",
-      "rewardStatusBadge": "139:38"
+      "rewardStatusBadge": "139:38",
+      "learningAudio": "146:22",
+      "learningRecord": "148:84",
+      "selfReview": "151:17",
+      "optionCard": "152:12",
+      "writingCanvas": "153:14",
+      "childInnerTopBar": "156:2",
+      "genericEmptyState": "157:2",
+      "noticeBanner": "157:67",
+      "resultPanel": "158:21",
+      "confirmDialog": "159:6",
+      "ledgerIncome": "160:8",
+      "ledgerExpense": "160:13",
+      "avatarPicker": "163:18",
+      "formField": "164:17",
+      "learningPromptCard": "173:2"
     },
-    "templates": {}
+    "templates": {
+      "childOnboarding": "168:2",
+      "childHomeEmpty": "168:16",
+      "childListenReady": "168:59",
+      "childSpeakPermission": "168:78",
+      "childReadDefault": "168:97",
+      "childWriteReady": "169:96",
+      "childMarkedReview": "169:115",
+      "childLearningError": "169:134",
+      "childResultComplete": "169:153",
+      "starLedgerDefault": "169:172",
+      "starLedgerEmpty": "169:191",
+      "childRewardsEmpty": "169:210"
+    }
   },
   "completedSteps": [
     "P0.a",
@@ -87,7 +120,19 @@
     "P3.c-parent-switch-dialog",
     "P3.c-reward-status-badge",
     "P3.c-cover-update",
-    "P3.c-validation"
+    "P3.c-validation",
+    "P3.a-batch-a-learning-controls",
+    "P3.b-batch-a-audio-record",
+    "P3.c-batch-a-learning-interaction",
+    "P3.d-batch-a-child-feedback",
+    "P3.e-batch-a-onboarding-form",
+    "P3.f-batch-a-validation",
+    "PA.a",
+    "PA.b",
+    "PA.c",
+    "PA.d",
+    "PA.e",
+    "PA.f"
   ],
   "pendingValidations": []
 }

@@ -1568,6 +1568,96 @@ button.challenge-theme-card:active { transform: scale(.99); }
   transform: none;
 }
 
+/* V1.5 adventure placeholder */
+.child-adventure-shell {
+  --home-cream: var(--happy-color-bg-app);
+  width: min(100%, 390px);
+  padding-bottom: 70px;
+  color: var(--happy-color-text-primary);
+  background: var(--home-cream);
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+
+.adventure-coming-screen {
+  min-height: calc(100dvh - 174px);
+  padding: 24px 18px 104px;
+  display: grid;
+  place-items: center;
+  background: var(--home-cream);
+}
+
+.adventure-coming-card {
+  width: 100%;
+  min-height: 390px;
+  padding: 34px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  border: 1px solid #eadfce;
+  border-radius: 30px;
+  background: #fffefa;
+  box-shadow: 0 12px 30px rgba(103, 72, 34, .10);
+  text-align: center;
+}
+
+.adventure-coming-illustration {
+  width: min(52vw, 180px);
+  height: auto;
+  display: block;
+}
+
+.adventure-coming-card h1 {
+  margin: 0;
+  color: var(--happy-color-text-primary, #4b2416);
+  font-size: 30px;
+  line-height: 1.25;
+  letter-spacing: .04em;
+}
+
+.child-adventure-shell .happy-bottom-nav .nav-item.active {
+  border-radius: 18px;
+  background: #eeeafd;
+  transform: none;
+}
+
+.child-adventure-shell .happy-bottom-nav {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: flex-end;
+  gap: 0;
+  width: min(calc(100% - 28px), 362px);
+  height: 70px;
+}
+
+.child-adventure-shell .happy-bottom-nav .nav-item {
+  width: auto;
+  height: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 1px 5px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.child-adventure-shell .happy-bottom-nav .nav-item::before { display: none; }
+.child-adventure-shell .happy-bottom-nav .nav-item img {
+  display: block;
+  width: 30px;
+  height: 30px;
+  margin: 0;
+  object-fit: contain;
+}
+
+.child-adventure-shell .happy-bottom-nav .nav-item[data-screen="home"] { color: #3f7a0d; }
+.child-adventure-shell .happy-bottom-nav .nav-item[data-screen="units"] { color: #5d51b8; }
+.child-adventure-shell .happy-bottom-nav .nav-item[data-screen="rewards"] { color: #a64a00; }
+
 /* 儿童端奖励页：依据 Figma 98:126，仅作用于已确认的奖励一级页。 */
 .child-rewards-shell {
   min-height: 100dvh;

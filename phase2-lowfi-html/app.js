@@ -1036,25 +1036,12 @@ function childHome() {
 
 function unitsScreen() {
   return `
-    ${header('主题闯关')}
-    <main class="screen">
-      <h2 class="screen-title">三座主题冒险岛</h2>
-      ${allChallengeIslandsComplete() ? `<section class="learning-state-card all-islands-complete"><strong>三座冒险岛全部完成！</strong><span>所有徽章都已经点亮，可以选择喜欢的岛重新游玩；重玩不会重复增加星星。</span></section>` : ''}
-      <section class="card challenge-rules-summary">
-        <div class="row"><div><strong>怎么玩</strong><p class="subtle">完成当前岛的 6 关，下一座岛就会开启。</p></div><button class="text-button" data-action="show-challenge-rules">查看规则</button></div>
+    ${header('冒险')}
+    <main class="screen adventure-coming-screen">
+      <section class="adventure-coming-card" aria-labelledby="adventure-coming-title">
+        <img class="adventure-coming-illustration" src="assets/adventure-coming-soon.svg" alt="" aria-hidden="true">
+        <h1 id="adventure-coming-title">敬请期待</h1>
       </section>
-      ${challengeUnitOrder.map((unitId, index) => {
-        const config = challengeUnits[unitId];
-        const unit = units.find(item => item.id === unitId);
-        const progress = challengeDoneCount(unitId);
-        const unlocked = challengeUnitUnlocked(unitId);
-        const status = !unlocked ? '未开启' : progress === CHALLENGE_STAGE_COUNT ? '已完成' : progress ? '继续闯关' : '开始冒险';
-        return `<button class="card challenge-theme-card ${unlocked ? '' : 'disabled-theme'}" data-action="open-unit" data-id="${unitId}" ${unlocked ? '' : 'disabled'}>
-          <div class="challenge-theme-top"><div class="placeholder-icon">主题<br>${index + 1}</div><div class="unit-copy"><h3>${config.islandTitle}</h3><p>${unit.title}</p></div><span class="status ${unlocked ? '' : 'locked'}">${status}</span></div>
-          <div class="progress-track"><i style="width:${progress / CHALLENGE_STAGE_COUNT * 100}%"></i></div>
-          <p class="tiny">${unlocked ? `已通过 ${progress}/${CHALLENGE_STAGE_COUNT} 关 · 完成可获得“${config.badge}”` : `完成“${challengeUnits[challengeUnitOrder[index - 1]].islandTitle}”后开启`}</p>
-        </button>`;
-      }).join('')}
     </main>
     ${childNav('units')}`;
 }
@@ -1316,7 +1303,7 @@ function starBillScreen() {
 }
 
 function childNav(active) {
-  const visualChildNav = ['home', 'rewards'].includes(active);
+  const visualChildNav = ['home', 'units', 'rewards'].includes(active);
   const items = visualChildNav
     ? [
       ['home', '学习', active === 'rewards' ? 'assets/reward-ui/nav-home.svg' : 'assets/figma-home-10-3/nav-home.svg'],
@@ -1560,7 +1547,7 @@ function parentSettingsScreen() {
         <button class="settings-tab ${tab === 'content' ? 'active' : ''}" data-action="set-parent-settings-tab" data-tab="content" role="tab" aria-selected="${tab === 'content'}">教材内容</button>
       </div>
       <section class="settings-tab-panel">${tab === 'child' ? childPanel : tab === 'reward' ? rewardSettingsPanel() : contentModelPanel()}</section>
-      <footer class="settings-version"><strong>V1.4</strong><span>提醒：教材内容仍处于准备阶段，正式制作前需复核教材及授权。</span></footer>
+      <footer class="settings-version"><strong>V1.5</strong><span>提醒：教材内容仍处于准备阶段，正式制作前需复核教材及授权。</span></footer>
     </main>
     ${parentNav('parentSettings')}`;
 }
@@ -1704,14 +1691,19 @@ function render() {
     return;
   }
   if (ensureDailyPlan()) save();
-  const childScreens = { home: childHome, units: unitsScreen, unit: unitDetail, challengeStage: challengeStageScreen, task: taskScreen, rewards: rewardsScreen, starBill: starBillScreen };
+  if (state.role === 'child' && ['unit', 'challengeStage'].includes(state.screen)) {
+    state.screen = 'units';
+    save();
+  }
+  const childScreens = { home: childHome, units: unitsScreen, unit: unitsScreen, challengeStage: unitsScreen, task: taskScreen, rewards: rewardsScreen, starBill: starBillScreen };
   const parentScreens = { parentHome, settings: settingsScreen, report: reportScreen, parentSettings: parentSettingsScreen };
   const screens = state.role === 'child' ? childScreens : parentScreens;
   const fallback = state.role === 'child' ? childHome : parentHome;
-  const isInnerScreen = state.role === 'child' && ['unit', 'challengeStage', 'task', 'starBill'].includes(state.screen);
+  const isInnerScreen = state.role === 'child' && ['task', 'starBill'].includes(state.screen);
   const isChildHome = state.role === 'child' && state.screen === 'home';
+  const isChildAdventure = state.role === 'child' && ['units', 'unit', 'challengeStage'].includes(state.screen);
   const isChildRewards = state.role === 'child' && state.screen === 'rewards';
-  app.innerHTML = `<div class="app-shell ${isInnerScreen ? 'inner-shell' : ''} ${isChildHome ? 'child-home-shell' : ''} ${isChildRewards ? 'child-rewards-shell' : ''}">${systemStatusBar()}${systemNoticeBanner()}${(screens[state.screen] || fallback)()}</div>`;
+  app.innerHTML = `<div class="app-shell ${isInnerScreen ? 'inner-shell' : ''} ${isChildHome ? 'child-home-shell' : ''} ${isChildAdventure ? 'child-adventure-shell' : ''} ${isChildRewards ? 'child-rewards-shell' : ''}">${systemStatusBar()}${systemNoticeBanner()}${(screens[state.screen] || fallback)()}</div>`;
 
   if (['settings', 'parentSettings'].includes(state.screen)) {
     const form = document.getElementById('settings-form');

@@ -373,6 +373,14 @@ let pendingChildAvatar = null;
 let pendingRewardImage = null;
 let editingRewardId = null;
 let pendingRoleDestination = null;
+let taskRecorder = null;
+let taskStream = null;
+let taskChunks = [];
+let taskAudioUrl = null;
+let taskInteractionState = 'ready';
+let taskFeedback = null;
+let pendingTaskResult = null;
+let taskChoiceIndex = null;
 
 const app = document.getElementById('app');
 const overlayRoot = document.getElementById('overlay-root');
@@ -457,25 +465,23 @@ function onboardingScreen() {
   return `
     <main class="screen onboarding-screen">
       ${systemNoticeBanner()}
-      <section class="onboarding-hero card">
-        <span class="onboarding-kicker">欢迎使用 Happy 英语</span>
-        <h1>先为小朋友建立学习资料</h1>
-        <p>学习进度、星星、复习和奖励都会按小朋友分别保存。</p>
+      <section class="onboarding-intro">
+        <h1>先认识一下你</h1>
+        <p>选择头像，再告诉我你的名字</p>
       </section>
-      <section class="card onboarding-form-card">
+      <section class="onboarding-form-card">
         <label class="child-avatar-upload onboarding-avatar" for="child-avatar-file" aria-label="选择小孩头像">
-          <div class="child-avatar-preview">${pendingChildAvatar ? `<img src="${pendingChildAvatar}" alt="新头像预览">` : '<span>头像<br><small>可选</small></span>'}</div>
+          <div class="child-avatar-preview">${pendingChildAvatar ? `<img src="${pendingChildAvatar}" alt="新头像预览">` : '<strong>H</strong>'}</div>
+          <span>选择头像</span>
         </label>
         <form id="onboarding-form" class="form-grid">
           <input id="child-avatar-file" class="avatar-file-input" type="file" accept="image/png,image/jpeg,image/webp">
-          <label class="field">小朋友叫什么名字？
-            <input name="childName" type="text" maxlength="20" placeholder="例如：HAPPY" autocomplete="off" required>
+          <label class="field onboarding-name-field"><span>小孩名称</span>
+            <input name="childName" type="text" maxlength="20" value="HAPPY" placeholder="例如：HAPPY" autocomplete="off" required>
           </label>
-          <div class="initial-state-note"><strong>初始状态</strong><span>0 颗星星 · 暂无奖励 · 自动生成第一天学习计划</span></div>
-          <button class="primary" type="submit">建立资料并开始学习</button>
+          <button class="primary happy-button happy-button-primary" type="submit">开始使用</button>
         </form>
       </section>
-      <p class="onboarding-privacy">资料优先保存在本机，不需要注册账号。</p>
     </main>`;
 }
 
@@ -553,6 +559,60 @@ function cleanupChallengeRecording() {
   challengeChunks = [];
   if (challengeAudioUrl) URL.revokeObjectURL(challengeAudioUrl);
   challengeAudioUrl = null;
+}
+
+function cleanupTaskRecording() {
+  if (taskRecorder?.state === 'recording') taskRecorder.stop();
+  taskStream?.getTracks().forEach(track => track.stop());
+  taskRecorder = null;
+  taskStream = null;
+  taskChunks = [];
+  if (taskAudioUrl) URL.revokeObjectURL(taskAudioUrl);
+  taskAudioUrl = null;
+  taskInteractionState = 'ready';
+}
+
+async function startTaskRecording() {
+  if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+    taskInteractionState = 'permission-denied';
+    taskFeedback = { type: 'warning', text: '当前浏览器不支持录音，请在安卓设备或最新版浏览器中体验。' };
+    render();
+    return;
+  }
+  try {
+    taskStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    taskChunks = [];
+    taskRecorder = new MediaRecorder(taskStream);
+    taskRecorder.addEventListener('dataavailable', event => { if (event.data.size) taskChunks.push(event.data); });
+    taskRecorder.addEventListener('stop', () => {
+      if (taskAudioUrl) URL.revokeObjectURL(taskAudioUrl);
+      taskAudioUrl = URL.createObjectURL(new Blob(taskChunks, { type: taskRecorder?.mimeType || 'audio/webm' }));
+      taskStream?.getTracks().forEach(track => track.stop());
+      taskStream = null;
+      taskInteractionState = 'recorded';
+      if (state.selectedTaskId) experienceTask(state.selectedTaskId);
+      taskFeedback = { type: 'success', text: '录音完成！可以播放听一听，也可以重新录音。' };
+      render();
+    });
+    taskRecorder.start();
+    taskInteractionState = 'recording';
+    taskFeedback = { type: 'recording', text: '正在录音，请清楚地说出句子。' };
+    render();
+  } catch (error) {
+    taskInteractionState = 'permission-denied';
+    taskFeedback = { type: 'warning', text: '没有获得麦克风权限，请允许后再试一次。' };
+    render();
+  }
+}
+
+function stopTaskRecording() {
+  if (taskRecorder?.state === 'recording') taskRecorder.stop();
+}
+
+function playTaskRecording() {
+  if (!taskAudioUrl) return showToast('请先录下一段声音');
+  const audio = new Audio(taskAudioUrl);
+  audio.play().catch(() => showToast('录音播放失败，请检查媒体音量或耳机连接'));
 }
 
 async function startChallengeRecording() {
@@ -749,6 +809,7 @@ function todayPlanTasks() {
 }
 
 function navTo(screen) {
+  if (state.screen === 'task' && screen !== 'task') cleanupTaskRecording();
   state.screen = screen;
   state.selectedTaskId = null;
   save();
@@ -757,8 +818,11 @@ function navTo(screen) {
 }
 
 function openTask(taskId) {
+  cleanupTaskRecording();
   state.selectedTaskId = taskId;
   state.screen = 'task';
+  taskInteractionState = 'ready';
+  taskFeedback = null;
   save();
   render();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -805,13 +869,17 @@ function completeTask(taskId) {
   const planTasks = todayPlanTasks();
   const todayComplete = planTasks.length > 0 && planTasks.every(task => state.todayCompletedIds.includes(task.id));
   const courseComplete = allLearningContentComplete();
-  state.screen = 'home';
+  pendingTaskResult = {
+    title: todayComplete ? '今天的任务完成啦！' : '任务完成！',
+    stars: newlyCompleted ? 3 : 0,
+    todayComplete,
+    courseComplete
+  };
+  state.screen = 'taskResult';
   state.selectedTaskId = null;
   save();
   render();
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  if (newlyCompleted && todayComplete) showDailyCompleteDialog(courseComplete);
-  else showToast(newlyCompleted ? '任务完成，获得 3 颗星星' : '这项任务今天已经完成');
 }
 
 function experienceTask(taskId) {
@@ -819,8 +887,9 @@ function experienceTask(taskId) {
   state.todayExperiencedTaskIds ||= [];
   if (!state.todayExperiencedTaskIds.includes(taskId)) state.todayExperiencedTaskIds.push(taskId);
   save();
+  taskInteractionState = 'experienced';
+  taskFeedback = { type: 'success', text: '做得好！现在可以完成任务了。' };
   render();
-  showToast('体验完成，现在可以提交任务');
 }
 
 function ensureReviewItem(taskId, source) {
@@ -915,8 +984,9 @@ function header(title) {
     const backTargets = {
       unit: 'units',
       challengeStage: 'unit',
-      task: 'home',
-      starBill: state.starBillReturnScreen || 'home'
+       task: 'home',
+       taskResult: 'home',
+       starBill: state.starBillReturnScreen || 'home'
     };
     if (!isPrimary) {
       return `
@@ -1158,31 +1228,74 @@ function challengeStageScreen() {
     </main>`;
 }
 
+function taskLearningCopy(info) {
+  if (info.type === '听') return { english: "Hello, I'm Happy!", chinese: '你好，我是 Happy！', instruction: '先听 3 句问候' };
+  if (info.type === '说') return { english: 'Hello!', chinese: '你好！', instruction: '先听示范，再录下自己的声音' };
+  if (info.type === '写') return { english: 'Write “A”', chinese: '写一写字母 A', instruction: '沿着提示慢慢描写' };
+  return { english: 'Find “Hello”', chinese: '找到 Hello', instruction: '选择正确的单词' };
+}
+
+function taskFeedbackBanner() {
+  if (!taskFeedback?.text) return '';
+  return `<div class="learning-feedback ${taskFeedback.type || ''}" role="status">${escapeHtml(taskFeedback.text)}</div>`;
+}
+
+function taskActivity(info, hasExperienced) {
+  const copy = taskLearningCopy(info);
+  if (info.type === '听') {
+    return `<button class="learning-control" data-action="task-play-phrase" data-phrase="${copy.english}">
+      <span class="learning-dot blue"></span><span><strong>播放示范音频</strong><small>${hasExperienced ? '可以再次播放' : '点击开始播放'}</small></span>
+    </button>`;
+  }
+  if (info.type === '说') {
+    const permissionBlocked = taskInteractionState === 'permission-denied';
+    const isRecording = taskInteractionState === 'recording';
+    const hasRecording = Boolean(taskAudioUrl);
+    return `<div class="learning-control-stack">
+      <button class="learning-control" data-action="task-play-phrase" data-phrase="${copy.english}"><span class="learning-dot blue"></span><span><strong>播放示范音频</strong><small>点击开始播放</small></span></button>
+      <button class="learning-control ${isRecording ? 'is-recording' : ''}" data-action="${isRecording ? 'task-stop-recording' : hasRecording ? 'task-play-recording' : 'task-start-recording'}"><span class="learning-dot orange"></span><span><strong>${isRecording ? '停止录音' : hasRecording ? '播放我的录音' : '允许使用麦克风'}</strong><small>${isRecording ? '正在录音，完成后点击这里' : hasRecording ? '录音已保存，可播放或重录' : permissionBlocked ? '未获得权限，请在系统设置中允许' : '需要权限才能录音'}</small></span></button>
+      ${hasRecording ? `<button class="learning-secondary-action" data-action="task-reset-recording">重新录音</button>` : ''}
+    </div>`;
+  }
+  if (info.type === '写') {
+    return `<button class="writing-board ${hasExperienced ? 'is-drawn' : ''}" data-action="task-write" data-id="${info.id}" aria-label="描写字母 A"><strong>A</strong><span>${hasExperienced ? '已经完成一次描写' : '沿着虚线描一描'}</span></button>
+      <button class="learning-secondary-action" data-action="task-reset-writing" data-id="${info.id}">清空重写</button>`;
+  }
+  const choices = ['Hello', 'Hi', 'Goodbye', 'Thank you'];
+  return `<div class="word-choice-grid">${choices.map((choice, index) => `<button class="word-choice ${taskChoiceIndex === index ? 'selected' : ''}" data-action="task-choice" data-index="${index}" data-correct="${index === 0}" data-id="${info.id}">${choice}</button>`).join('')}</div>`;
+}
+
 function taskScreen() {
   const info = taskById(state.selectedTaskId);
   if (!info) return childHome();
+  const copy = taskLearningCopy(info);
   const isInReview = state.reviewItems.some(item => item.taskId === info.id && item.status === '待复习');
   const childMarkedReview = state.reviewItems.some(item => item.taskId === info.id && item.status === '待复习' && item.source === '孩子主动标记');
   const hasExperienced = state.todayExperiencedTaskIds?.includes(info.id);
-  const actionHint = info.type === '听' ? '播放示范音频（低保真模拟）' : info.type === '说' ? '录音与重录（低保真模拟）' : info.type === '写' ? '手写区域（低保真占位）' : '看图选择区域（低保真占位）';
-  const experienceLabel = info.type === '听' ? '播放一次示范' : info.type === '说' ? '完成一次录音' : info.type === '写' ? '完成一次书写' : '完成一次找图';
   return `
     ${header(info.title)}
-    <main class="screen inner-screen task-detail-screen">
-      <section class="card task-detail-card">
-        <div class="task-detail-heading">
-          <span class="status">${info.type}</span>
-          <div><h2>${info.title}</h2><p class="subtle">${info.unit.title} · ${info.subtitle}</p></div>
-        </div>
-        <div class="exercise-placeholder"><div><strong>${actionHint}</strong><span>此处用于确认流程，不使用正式教材音频或插画。</span></div></div>
-        <div class="action-stack">
-          <button class="secondary" data-action="simulate" data-id="${info.id}" ${hasExperienced ? 'disabled' : ''}>${hasExperienced ? '已完成任务体验' : experienceLabel}</button>
-          <button class="primary" data-action="complete-task" data-id="${info.id}" ${hasExperienced ? '' : 'disabled'}>${hasExperienced ? '完成任务 +3 星' : '请先完成上方体验'}</button>
-        </div>
-        <section class="self-review-card">
-          <div><strong>这项还不熟？</strong><span>没关系，先放进复习区，稍后再轻松练一次。</span></div>
-          <button class="secondary self-review-button" data-action="${childMarkedReview ? 'remove-review' : 'add-review'}" data-id="${info.id}" ${isInReview && !childMarkedReview ? 'disabled' : ''}>${childMarkedReview ? '撤销“还不熟”' : isInReview ? '已加入今日复习' : '标记“还不熟”'}</button>
-        </section>
+    <main class="screen inner-screen task-detail-screen happy-learning-screen">
+      <section class="learning-prompt-card">
+        <h2>${copy.english}</h2><strong>${copy.chinese}</strong><p>${copy.instruction}</p>
+      </section>
+      ${taskActivity(info, hasExperienced)}
+      ${taskFeedbackBanner()}
+      <div class="learning-reward-hint">完成后可获得 3 颗星星</div>
+      ${info.type === '听' ? `<div class="learning-confidence-row"><button data-action="task-confident" data-id="${info.id}">我会了</button><button class="${childMarkedReview ? 'selected' : ''}" data-action="${childMarkedReview ? 'remove-review' : 'add-review'}" data-id="${info.id}" ${isInReview && !childMarkedReview ? 'disabled' : ''}>${childMarkedReview ? '已加入复习' : '还不熟'}</button></div>` : ''}
+      <button class="primary happy-button happy-button-primary learning-complete-button" data-action="complete-task" data-id="${info.id}" ${hasExperienced ? '' : 'disabled'}>完成任务 +3 星</button>
+    </main>`;
+}
+
+function taskResultScreen() {
+  const result = pendingTaskResult || { title: '任务完成！', stars: 3 };
+  return `
+    ${header('任务完成')}
+    <main class="screen inner-screen task-result-screen">
+      <section class="task-result-card">
+        <h2>${escapeHtml(result.title)}</h2>
+        <strong>+${Number(result.stars || 0)} 星</strong>
+        <p>今天又进步了一点</p>
+        <button class="primary happy-button happy-button-primary" data-action="finish-task-result">返回首页</button>
       </section>
     </main>`;
 }
@@ -1547,7 +1660,7 @@ function parentSettingsScreen() {
         <button class="settings-tab ${tab === 'content' ? 'active' : ''}" data-action="set-parent-settings-tab" data-tab="content" role="tab" aria-selected="${tab === 'content'}">教材内容</button>
       </div>
       <section class="settings-tab-panel">${tab === 'child' ? childPanel : tab === 'reward' ? rewardSettingsPanel() : contentModelPanel()}</section>
-      <footer class="settings-version"><strong>V1.5</strong><span>提醒：教材内容仍处于准备阶段，正式制作前需复核教材及授权。</span></footer>
+      <footer class="settings-version"><strong>V1.6</strong><span>提醒：教材内容仍处于准备阶段，正式制作前需复核教材及授权。</span></footer>
     </main>
     ${parentNav('parentSettings')}`;
 }
@@ -1695,15 +1808,16 @@ function render() {
     state.screen = 'units';
     save();
   }
-  const childScreens = { home: childHome, units: unitsScreen, unit: unitsScreen, challengeStage: unitsScreen, task: taskScreen, rewards: rewardsScreen, starBill: starBillScreen };
+  const childScreens = { home: childHome, units: unitsScreen, unit: unitsScreen, challengeStage: unitsScreen, task: taskScreen, taskResult: taskResultScreen, rewards: rewardsScreen, starBill: starBillScreen };
   const parentScreens = { parentHome, settings: settingsScreen, report: reportScreen, parentSettings: parentSettingsScreen };
   const screens = state.role === 'child' ? childScreens : parentScreens;
   const fallback = state.role === 'child' ? childHome : parentHome;
-  const isInnerScreen = state.role === 'child' && ['task', 'starBill'].includes(state.screen);
+  const isInnerScreen = state.role === 'child' && ['task', 'taskResult', 'starBill'].includes(state.screen);
   const isChildHome = state.role === 'child' && state.screen === 'home';
+  const isChildLearning = state.role === 'child' && ['task', 'taskResult'].includes(state.screen);
   const isChildAdventure = state.role === 'child' && ['units', 'unit', 'challengeStage'].includes(state.screen);
   const isChildRewards = state.role === 'child' && state.screen === 'rewards';
-  app.innerHTML = `<div class="app-shell ${isInnerScreen ? 'inner-shell' : ''} ${isChildHome ? 'child-home-shell' : ''} ${isChildAdventure ? 'child-adventure-shell' : ''} ${isChildRewards ? 'child-rewards-shell' : ''}">${systemStatusBar()}${systemNoticeBanner()}${(screens[state.screen] || fallback)()}</div>`;
+  app.innerHTML = `<div class="app-shell ${isInnerScreen ? 'inner-shell' : ''} ${isChildHome ? 'child-home-shell' : ''} ${isChildLearning ? 'child-learning-shell' : ''} ${isChildAdventure ? 'child-adventure-shell' : ''} ${isChildRewards ? 'child-rewards-shell' : ''}">${systemStatusBar()}${systemNoticeBanner()}${(screens[state.screen] || fallback)()}</div>`;
 
   if (['settings', 'parentSettings'].includes(state.screen)) {
     const form = document.getElementById('settings-form');
@@ -1829,6 +1943,64 @@ document.addEventListener('click', event => {
   if (action === 'add-review') addReview(id);
   if (action === 'remove-review') removeChildReview(id);
   if (action === 'simulate') experienceTask(id);
+  if (action === 'task-play-phrase') {
+    const phrase = control.dataset.phrase || '';
+    if ('speechSynthesis' in window && phrase) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(phrase);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.78;
+      utterance.onend = () => { if (state.selectedTaskId) experienceTask(state.selectedTaskId); };
+      window.speechSynthesis.speak(utterance);
+    } else {
+      showToast('当前浏览器无法播放示范音频');
+    }
+  }
+  if (action === 'task-start-recording') startTaskRecording();
+  if (action === 'task-stop-recording') stopTaskRecording();
+  if (action === 'task-play-recording') playTaskRecording();
+  if (action === 'task-reset-recording') {
+    cleanupTaskRecording();
+    taskFeedback = null;
+    render();
+  }
+  if (action === 'task-write') experienceTask(id);
+  if (action === 'task-reset-writing') {
+    state.todayExperiencedTaskIds = (state.todayExperiencedTaskIds || []).filter(taskId => taskId !== id);
+    taskFeedback = null;
+    save();
+    render();
+  }
+  if (action === 'task-choice') {
+    taskChoiceIndex = Number(control.dataset.index);
+    if (control.dataset.correct === 'true') {
+      taskFeedback = { type: 'success', text: '答对啦！你找到了 Hello。' };
+      experienceTask(id);
+    } else {
+      const key = `learning-${id}`;
+      state.wrongAnswerStreaks ||= {};
+      const count = Number(state.wrongAnswerStreaks[key] || 0) + 1;
+      if (count >= 3) {
+        state.wrongAnswerStreaks[key] = 0;
+        ensureReviewItem(id, '连续答错3次');
+        taskFeedback = { type: 'warning', text: '已经连续答错 3 次，这项练习已自动加入复习。' };
+      } else {
+        state.wrongAnswerStreaks[key] = count;
+        taskFeedback = { type: 'warning', text: `再想一想，连续答错 ${count}/3。` };
+      }
+      save();
+      render();
+    }
+  }
+  if (action === 'task-confident') {
+    experienceTask(id);
+    taskFeedback = { type: 'success', text: '真棒！已经准备好完成任务了。' };
+    render();
+  }
+  if (action === 'finish-task-result') {
+    pendingTaskResult = null;
+    navTo('home');
+  }
   if (action === 'open-unit') {
     if (!challengeUnitUnlocked(id)) return showToast('先完成前一座主题岛，就能开启这里');
     state.selectedUnitId = id;

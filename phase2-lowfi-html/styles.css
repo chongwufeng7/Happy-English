@@ -2185,6 +2185,86 @@ button.challenge-theme-card:active { transform: scale(.99); }
 .dialog-action-stack { display: grid; gap: 10px; margin-top: 18px; }
 .dialog-action-stack > button { width: 100%; }
 
+/* V1.6 Batch A: 儿童端初始化与学习内页 */
+.onboarding-shell,
+.child-learning-shell {
+  color: var(--happy-color-text-primary);
+  background: var(--happy-color-bg-app);
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+
+.onboarding-shell .system-status-bar,
+.child-learning-shell .system-status-bar,
+.child-learning-shell .secondary-topbar {
+  position: relative;
+  top: auto;
+  background: var(--happy-color-bg-app);
+  border: 0;
+}
+
+.child-learning-shell .secondary-topbar {
+  min-height: 64px;
+  padding: 13px 16px 14px;
+}
+
+.child-learning-shell .secondary-topbar h1 { color: var(--happy-color-text-primary); font-size: 21px; font-weight: 900; }
+.child-learning-shell .topbar-back { color: var(--happy-color-text-primary); background: transparent; border: 0; font-weight: 800; }
+
+.onboarding-screen { min-height: 820px; padding: 12px 23px 40px; }
+.onboarding-intro { margin: 8px 0 16px; text-align: center; }
+.onboarding-intro h1 { margin: 0; font-size: 26px; font-weight: 900; }
+.onboarding-intro p { margin: 10px 0 0; color: var(--happy-color-text-secondary); font-size: 14px; font-weight: 700; }
+.onboarding-form-card { margin: 0; padding: 0; background: transparent; border: 0; box-shadow: none; }
+.onboarding-avatar { width: 160px; height: 160px; margin: 0 auto 16px; place-items: center; gap: 8px; color: var(--happy-color-accent-blue); font-size: 13px; font-weight: 800; }
+.onboarding-avatar .child-avatar-preview { position: relative; display: grid; width: 160px; height: 160px; place-items: center; overflow: hidden; color: #fff; background: var(--happy-color-bg-progress); border: 2px solid #ace4fa; border-radius: 22px; box-shadow: none; }
+.onboarding-avatar .child-avatar-preview::before { content: ""; position: absolute; width: 88px; height: 88px; border-radius: 50%; background: #2684c4; }
+.onboarding-avatar .child-avatar-preview strong { position: relative; z-index: 1; font-size: 42px; }
+.onboarding-avatar .child-avatar-preview img { position: relative; z-index: 2; width: 100%; height: 100%; object-fit: cover; }
+.onboarding-name-field { gap: 0; padding: 11px 14px 10px; background: #fff; border: 1px solid #edd9c7; border-radius: 20px; }
+.onboarding-name-field span { color: var(--happy-color-text-secondary); font-size: 12px; }
+.onboarding-name-field input { min-height: 34px; padding: 2px 0 0; color: var(--happy-color-text-primary); background: transparent; border: 0; border-radius: 0; font-size: 16px; font-weight: 900; outline: 0; }
+.onboarding-screen .happy-button { width: calc(100% - 64px); min-height: 54px; margin: 2px auto 0; }
+
+.happy-learning-screen { display: grid; gap: 16px; padding: 0 23px 38px; }
+.learning-prompt-card { min-height: 164px; padding: 24px; background: var(--happy-color-bg-progress); border: 1px solid #bde4f1; border-radius: 21px; }
+.learning-prompt-card h2 { margin: 0 0 18px; font-size: 26px; line-height: 1.2; }
+.learning-prompt-card strong { display: block; color: var(--happy-color-accent-blue); font-size: 17px; }
+.learning-prompt-card p { margin: 7px 0 0; color: var(--happy-color-text-secondary); font-size: 14px; font-weight: 700; }
+.learning-control-stack { display: grid; gap: 16px; }
+.learning-control { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 72px; padding: 13px 16px; color: var(--happy-color-text-primary); text-align: left; background: #fff; border: 1px solid #ead7c5; border-radius: 20px; }
+.learning-control > span:last-child { display: grid; gap: 3px; }
+.learning-control strong { font-size: 16px; }
+.learning-control small { color: var(--happy-color-text-secondary); font-size: 12px; }
+.learning-dot { flex: 0 0 16px; width: 16px; height: 16px; border-radius: 50%; }
+.learning-dot.blue { background: #2988c7; }
+.learning-dot.orange { background: #f57b19; }
+.learning-control.is-recording { background: #fff4df; border-color: #ffc865; }
+.learning-reward-hint,
+.learning-feedback { display: grid; min-height: 56px; padding: 12px 16px; place-items: center; text-align: center; border-radius: 18px; font-size: 14px; font-weight: 800; }
+.learning-reward-hint { color: var(--happy-color-accent-blue); background: var(--happy-color-bg-progress); border: 1px solid #bde4f1; }
+.learning-feedback { color: #db6716; background: #fff3cd; border: 1px solid #f1d998; }
+.learning-feedback.success { color: #4f9e18; background: #eff9d9; border-color: #cfe6a7; }
+.learning-feedback.recording { color: #c84c45; background: #fff0ef; border-color: #efc2bf; }
+.learning-confidence-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.learning-confidence-row button,
+.learning-secondary-action { min-height: 56px; color: var(--happy-color-text-primary); background: #fff; border: 1px solid #ead7c5; border-radius: 20px; font-weight: 800; }
+.learning-confidence-row button.selected { color: #f47c16; background: #fff3cd; }
+.learning-complete-button { width: calc(100% - 64px) !important; min-height: 54px !important; margin: 10px auto 0; }
+.learning-complete-button:disabled { color: #ad8e79; background: #efe1cf; border-color: transparent; box-shadow: none; }
+.word-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.word-choice { min-height: 96px; color: var(--happy-color-text-primary); background: #fff; border: 1px solid #ead7c5; border-radius: 20px; font-size: 18px; font-weight: 800; }
+.word-choice.selected { background: var(--happy-color-bg-progress); border-color: #86d7f4; }
+.writing-board { display: grid; width: 100%; min-height: 188px; padding: 20px; place-items: center; color: #a98574; background: #fff; border: 2px dashed #efd8c2; border-radius: 21px; }
+.writing-board strong { display: block; font-size: 76px; line-height: 1; }
+.writing-board span { font-size: 13px; }
+.writing-board.is-drawn { color: #247dbe; background: #f2fbff; }
+.task-result-screen { padding: 138px 23px 40px; }
+.task-result-card { display: grid; gap: 12px; padding: 38px 32px 32px; text-align: center; background: #effbd8; border: 1px solid #d2e7a6; border-radius: 21px; }
+.task-result-card h2 { margin: 0; font-size: 25px; }
+.task-result-card > strong { color: #59a91d; font-size: 21px; }
+.task-result-card p { margin: 0 0 4px; color: var(--happy-color-text-secondary); font-size: 14px; font-weight: 700; }
+.task-result-card button { width: 100%; margin-top: 4px; }
+
 .reward-confirm-dialog > img {
   display: block;
   width: 104px;

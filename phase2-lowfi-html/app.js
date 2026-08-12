@@ -393,6 +393,25 @@ function save() {
   }
 }
 
+function stateSnapshot() {
+  return JSON.parse(JSON.stringify(state));
+}
+
+function saveOrRollback(snapshot, successMessage = '') {
+  if (save()) {
+    if (successMessage) showToast(successMessage);
+    return true;
+  }
+  const failedNotice = state.systemNotice;
+  state = snapshot;
+  state.systemNotice = failedNotice || {
+    type: 'save-failed',
+    message: '学习数据暂时无法保存，请检查手机存储空间后重试。'
+  };
+  showToast('保存失败，本次修改未生效，请重试');
+  return false;
+}
+
 function activeChild() {
   return state.children.find(child => child.id === state.activeChildId) || state.children[0];
 }
@@ -889,6 +908,7 @@ function systemStatusBar() {
 }
 
 function header(title) {
+  const safeTitle = escapeHtml(title);
   if (state.role === 'child') {
     const primaryScreens = ['home', 'units', 'rewards'];
     const isPrimary = primaryScreens.includes(state.screen);
@@ -902,7 +922,7 @@ function header(title) {
       return `
         <header class="topbar child-topbar secondary-topbar">
           <button class="topbar-back" data-action="secondary-back" data-screen="${backTargets[state.screen] || 'home'}" aria-label="返回">← 返回</button>
-          <h1>${title}</h1>
+          <h1>${safeTitle}</h1>
           <span class="topbar-spacer" aria-hidden="true"></span>
         </header>`;
     }
@@ -911,7 +931,7 @@ function header(title) {
       return `
         <header class="topbar child-topbar primary-topbar home-topbar">
           <div class="home-top-welcome">
-            <h1>欢迎，${homeDisplayName}！</h1>
+            <h1>欢迎，${escapeHtml(homeDisplayName)}！</h1>
           </div>
           <button class="happy-pill-button home-parent-entry" data-action="switch-role">切换家长端</button>
         </header>`;
@@ -929,7 +949,7 @@ function header(title) {
     return `
       <header class="topbar child-topbar primary-topbar">
         <div class="primary-title-zone">
-          <h1>${title}</h1>
+          <h1>${safeTitle}</h1>
           ${state.screen === 'rewards' ? `<button class="star-balance" data-action="open-star-bill" aria-label="查看星星账单">☆ <strong>${state.stars}</strong></button>` : ''}
         </div>
         <button class="text-button parent-entry" data-action="switch-role">切换家长端</button>
@@ -937,7 +957,7 @@ function header(title) {
   }
   return `
     <header class="topbar parent-topbar">
-      <h1>${title}</h1>
+      <h1>${safeTitle}</h1>
       <button class="text-button" data-action="switch-role">切换儿童端</button>
     </header>`;
 }
@@ -989,7 +1009,6 @@ function childHome() {
       <section class="home-hero-stage">
         <div class="home-hero-card">
           <img src="assets/home-ui/happy-home-hero-v2.png" alt="黑白奶牛猫、紫色变色龙和鹦鹉在草地上欢迎你">
-          <p class="home-hero-tagline">今天也要开心学英语呀！</p>
         </div>
         <button class="primary happy-button happy-button-primary home-start-button" data-action="start-next" ${nextTask ? '' : 'disabled'}>${heroButtonLabel}</button>
       </section>
@@ -1085,7 +1104,7 @@ function challengeStageScreen() {
   const stages = challengeStagesFor(unitId);
   const meta = stages.find(item => item.id === stage) || stages[0];
   const replay = isReplayingUnit(unitId);
-  const learnerName = activeChildName();
+  const learnerName = escapeHtml(activeChildName());
   let activity = '';
 
   if (meta.kind === 'choice') {
@@ -1187,10 +1206,22 @@ function latestRewardRequest(rewardId) {
     .sort((a, b) => new Date(b.requestedAt || b.reviewedAt || 0) - new Date(a.requestedAt || a.reviewedAt || 0))[0] || null;
 }
 
+function rewardRequestSnapshot(request, reward = null) {
+  return {
+    title: request?.rewardTitleSnapshot || reward?.title || '已删除的奖励',
+    cost: Number(request?.rewardCostSnapshot ?? reward?.cost ?? 0),
+    note: request?.rewardNoteSnapshot ?? reward?.note ?? '',
+    image: request?.rewardImageSnapshot || reward?.image || ''
+  };
+}
+
 function rewardsScreen() {
   const rewardsContent = state.rewards.length
     ? state.rewards.map(reward => {
-        const latestRequest = latestRewardRequest(reward.id);
+      const latestRequest = latestRewardRequest(reward.id);
+        const requestReward = rewardRequestSnapshot(latestRequest, reward);
+        const lockedToRequest = ['待审批', '已同意'].includes(latestRequest?.status);
+        const displayReward = lockedToRequest ? requestReward : reward;
         const isRedeemed = latestRequest?.status === '已同意';
         const isPending = latestRequest?.status === '待审批';
         const isRejected = latestRequest?.status === '已拒绝';
@@ -1225,16 +1256,16 @@ function rewardsScreen() {
             : '';
         return `<article class="reward-product-card ${cardState}" data-reward-state="${cardState}">
           <div class="reward-product-image">
-            <img src="${reward.image || 'assets/reward-ui/gift.svg'}" alt="${escapeHtml(reward.title)}">
+            <img src="${displayReward.image || 'assets/reward-ui/gift.svg'}" alt="${escapeHtml(displayReward.title)}">
           </div>
           <div class="reward-product-copy">
             ${stateLabel ? `<span class="reward-state-badge">${stateLabel}</span>` : ''}
-            <h2>${escapeHtml(reward.title)}</h2>
-            <p class="reward-product-note">${escapeHtml(reward.note || '完成学习后，可以兑换这份小惊喜')}</p>
+            <h2>${escapeHtml(displayReward.title)}</h2>
+            <p class="reward-product-note">${escapeHtml(displayReward.note || '完成学习后，可以兑换这份小惊喜')}</p>
             ${isRedeemed && requestTime ? `<time class="reward-redeemed-time" datetime="${escapeHtml(latestRequest.reviewedAt)}">已兑换于 ${requestTime}</time>` : ''}
             ${stateDetail ? `<p class="reward-request-result">${escapeHtml(stateDetail)}</p>` : ''}
             <div class="reward-product-action">
-              <strong><img src="assets/reward-ui/star-cost.svg" alt="">${reward.cost}</strong>
+              <strong><img src="assets/reward-ui/star-cost.svg" alt="">${displayReward.cost}</strong>
               <button class="reward-exchange-button ${isRedeemed || isPending || isInsufficient ? 'is-disabled' : ''}" data-action="request-reward" data-id="${reward.id}" ${isRedeemed || isPending || isInsufficient ? 'disabled' : ''}>${buttonLabel}</button>
             </div>
           </div>
@@ -1288,12 +1319,12 @@ function childNav(active) {
   const visualChildNav = ['home', 'rewards'].includes(active);
   const items = visualChildNav
     ? [
-      ['home', '首页', active === 'rewards' ? 'assets/reward-ui/nav-home.svg' : 'assets/figma-home-10-3/nav-home.svg'],
-      ['units', '闯关', active === 'rewards' ? 'assets/reward-ui/nav-challenge.svg' : 'assets/figma-home-10-3/nav-challenge.svg'],
-      ['rewards', '商城', active === 'rewards' ? 'assets/reward-ui/nav-shop.svg' : 'assets/figma-home-10-3/nav-shop.svg']
+      ['home', '学习', active === 'rewards' ? 'assets/reward-ui/nav-home.svg' : 'assets/figma-home-10-3/nav-home.svg'],
+      ['units', '冒险', active === 'rewards' ? 'assets/reward-ui/nav-challenge.svg' : 'assets/figma-home-10-3/nav-challenge.svg'],
+      ['rewards', '奖品', active === 'rewards' ? 'assets/reward-ui/nav-shop.svg' : 'assets/figma-home-10-3/nav-shop.svg']
     ]
     : [
-      ['home', '首页', '□'], ['units', '闯关', '▦'], ['rewards', '奖励', '☆']
+      ['home', '学习', '□'], ['units', '冒险', '▦'], ['rewards', '奖品', '☆']
     ];
   return `<nav class="bottom-nav three-items ${visualChildNav ? 'home-bottom-nav happy-bottom-nav' : ''}" aria-label="儿童端导航">${items.map(([id, label, icon]) => `<button class="nav-item ${active === id ? 'active' : ''}" data-action="nav" data-screen="${id}">${visualChildNav ? `<img src="${icon}" alt="">` : `<span>${icon}</span>`}${label}</button>`).join('')}</nav>`;
 }
@@ -1318,13 +1349,14 @@ function parentHome() {
       <h2 class="section-title">奖励审批</h2>
       <section class="card">${pendingRewards.length ? pendingRewards.map(request => {
         const reward = state.rewards.find(item => item.id === request.rewardId);
-        if (!reward) return '';
-        return `<article class="reward-row"><div class="reward-copy"><h3>${escapeHtml(reward.title)}</h3><p>需要 ${reward.cost} 颗星星</p></div><div class="button-row"><button class="text-button" data-action="reward-decision" data-decision="reject" data-id="${request.id}">拒绝</button><button class="primary" data-action="reward-decision" data-decision="approve" data-id="${request.id}">同意</button></div></article>`;
+        const requestReward = rewardRequestSnapshot(request, reward);
+        return `<article class="reward-row"><div class="reward-copy"><h3>${escapeHtml(requestReward.title)}</h3><p>需要 ${requestReward.cost} 颗星星</p></div><div class="button-row"><button class="text-button" data-action="reward-decision" data-decision="reject" data-id="${request.id}">拒绝</button><button class="primary" data-action="reward-decision" data-decision="approve" data-id="${request.id}">同意</button></div></article>`;
       }).join('') : '<div class="empty">暂无兑换申请</div>'}</section>
       <h2 class="section-title">最近处理</h2>
       <section class="card">${processedRewards.length ? processedRewards.map(request => {
         const reward = state.rewards.find(item => item.id === request.rewardId);
-        return `<article class="reward-history-row"><div><strong>${escapeHtml(reward?.title || '已删除的奖励')}</strong><p>${request.reviewedAt ? formatLedgerTime(request.reviewedAt) : '时间未知'}${request.reason ? ` · ${escapeHtml(request.reason)}` : ''}</p></div><span class="status ${request.status === '已同意' ? 'done' : request.status === '审批失败' ? 'warning' : ''}">${request.status}</span></article>`;
+        const requestReward = rewardRequestSnapshot(request, reward);
+        return `<article class="reward-history-row"><div><strong>${escapeHtml(requestReward.title)}</strong><p>${request.reviewedAt ? formatLedgerTime(request.reviewedAt) : '时间未知'}${request.reason ? ` · ${escapeHtml(request.reason)}` : ''}</p></div><span class="status ${request.status === '已同意' ? 'done' : request.status === '审批失败' ? 'warning' : ''}">${request.status}</span></article>`;
       }).join('') : '<div class="empty">还没有处理记录</div>'}</section>
     </main>
     ${parentNav('parentHome')}`;
@@ -1506,14 +1538,14 @@ function parentSettingsScreen() {
     <section class="card child-profile-card">
       <label class="child-avatar-upload" for="child-avatar-file" aria-label="修改小孩头像">
         <div class="child-avatar-preview">
-          ${child.avatar ? `<img src="${child.avatar}" alt="${child.name}的头像">` : '<span>头像</span>'}
+          ${child.avatar ? `<img src="${child.avatar}" alt="${escapeHtml(child.name)}的头像">` : '<span>头像</span>'}
         </div>
       </label>
       <form id="child-profile-form" class="form-grid">
         <input type="hidden" name="childId" value="${child.id}">
         <input id="child-avatar-file" class="avatar-file-input" name="childAvatar" type="file" accept="image/png,image/jpeg,image/webp">
         <label class="field">小孩名称
-          <input name="childName" type="text" maxlength="20" value="${child.name}" autocomplete="off" required>
+          <input name="childName" type="text" maxlength="20" value="${escapeHtml(child.name)}" autocomplete="off" required>
         </label>
         <button class="primary" type="submit">保存小孩资料</button>
       </form>
@@ -1528,7 +1560,7 @@ function parentSettingsScreen() {
         <button class="settings-tab ${tab === 'content' ? 'active' : ''}" data-action="set-parent-settings-tab" data-tab="content" role="tab" aria-selected="${tab === 'content'}">教材内容</button>
       </div>
       <section class="settings-tab-panel">${tab === 'child' ? childPanel : tab === 'reward' ? rewardSettingsPanel() : contentModelPanel()}</section>
-      <footer class="settings-version"><strong>V1.3</strong><span>提醒：教材内容仍处于准备阶段，正式制作前需复核教材及授权。</span></footer>
+      <footer class="settings-version"><strong>V1.4</strong><span>提醒：教材内容仍处于准备阶段，正式制作前需复核教材及授权。</span></footer>
     </main>
     ${parentNav('parentSettings')}`;
 }
@@ -1598,13 +1630,19 @@ function submitRewardRequest(rewardId) {
   if (!reward) return showToast('这份奖励已经不存在');
   if (state.stars < reward.cost) return showToast('星星数量发生变化，暂时不能申请');
   if (!state.rewardRequests.some(item => item.rewardId === rewardId && item.status === '待审批')) {
+    const snapshot = stateSnapshot();
     state.rewardRequests.push({
       id: `request-${Date.now()}`,
       rewardId,
+      childId: state.activeChildId,
+      rewardTitleSnapshot: reward.title,
+      rewardCostSnapshot: reward.cost,
+      rewardNoteSnapshot: reward.note || '',
+      rewardImageSnapshot: reward.image || '',
       status: '待审批',
       requestedAt: new Date().toISOString()
     });
-    save();
+    if (!saveOrRollback(snapshot)) return;
   }
   overlayRoot.innerHTML = '';
   showToast('已提交给家长确认');
@@ -1614,11 +1652,12 @@ function submitRewardRequest(rewardId) {
 function requestRewardDecision(requestId, decision) {
   const request = state.rewardRequests.find(item => item.id === requestId && item.status === '待审批');
   const reward = request ? state.rewards.find(item => item.id === request.rewardId) : null;
+  const requestReward = rewardRequestSnapshot(request, reward);
   if (!request) return showToast('这条申请已经处理');
   const approving = decision === 'approve';
   overlayRoot.innerHTML = `<div class="overlay"><section class="dialog reward-decision-dialog" role="dialog" aria-modal="true" aria-labelledby="reward-decision-title">
     <h2 id="reward-decision-title">${approving ? '确认同意兑换？' : '确认暂不兑换？'}</h2>
-    <p><strong>${escapeHtml(reward?.title || '该奖励')}</strong>${reward ? ` · ${reward.cost} 颗星星` : ''}</p>
+    <p><strong>${escapeHtml(requestReward.title)}</strong> · ${requestReward.cost} 颗星星</p>
     <p class="subtle">${approving ? '确认后才会扣除星星，并在儿童端显示已兑换。' : '拒绝不会扣除星星，儿童之后仍可再次申请。'}</p>
     <div class="dialog-action-stack"><button class="primary" data-action="confirm-reward-decision" data-decision="${decision}" data-id="${requestId}">${approving ? '确认同意' : '确认拒绝'}</button><button class="secondary" data-action="close-overlay">取消</button></div>
   </section></div>`;
@@ -1628,28 +1667,34 @@ function decideReward(requestId, decision) {
   const request = state.rewardRequests.find(item => item.id === requestId);
   if (!request || request.status !== '待审批') return;
   const reward = state.rewards.find(item => item.id === request.rewardId);
+  const requestReward = rewardRequestSnapshot(request, reward);
+  const snapshot = stateSnapshot();
+  let successMessage = '';
   if (decision === 'approve' && !reward) {
     request.status = '审批失败';
     request.reason = '奖品已不存在，没有扣除星星。';
     request.reviewedAt = new Date().toISOString();
-    showToast('审批未完成：奖品已不存在');
-  } else if (decision === 'approve' && state.stars < reward.cost) {
+    successMessage = '审批未完成：奖品已不存在';
+  } else if (decision === 'approve' && state.stars < requestReward.cost) {
     request.status = '审批失败';
-    request.reason = `审批时星星不足，还差 ${reward.cost - state.stars} 颗。`;
+    request.reason = `审批时星星不足，还差 ${requestReward.cost - state.stars} 颗。`;
     request.reviewedAt = new Date().toISOString();
-    showToast('审批未完成：当前星星不足');
+    successMessage = '审批未完成：当前星星不足';
   } else if (decision === 'approve' && reward) {
-    recordStarChange(-reward.cost, `兑换奖品：${reward.title}`);
+    recordStarChange(-requestReward.cost, `兑换奖品：${requestReward.title}`);
     request.status = '已同意';
     request.reviewedAt = new Date().toISOString();
-    showToast('已批准，星星已扣除');
+    successMessage = '已批准，星星已扣除';
   } else {
     request.status = '已拒绝';
     request.reason = '家长本次暂未同意。';
     request.reviewedAt = new Date().toISOString();
-    showToast('已拒绝，不扣星星');
+    successMessage = '已拒绝，不扣星星';
   }
-  save();
+  if (!saveOrRollback(snapshot, successMessage)) {
+    render();
+    return;
+  }
   render();
 }
 
@@ -1729,11 +1774,14 @@ document.addEventListener('click', event => {
     const hasPendingRequest = state.rewardRequests.some(item => item.rewardId === id && item.status === '待审批');
     if (hasPendingRequest) return showToast('请先处理该奖励的待审批申请');
     if (!confirm(`确定删除“${reward.title}”吗？`)) return;
+    const snapshot = stateSnapshot();
     state.rewards = state.rewards.filter(item => item.id !== id);
+    if (!saveOrRollback(snapshot, '奖励已删除')) {
+      render();
+      return;
+    }
     if (editingRewardId === id) editingRewardId = null;
     pendingRewardImage = null;
-    save();
-    showToast('奖励已删除');
     render();
   }
   if (action === 'open-star-bill') {
@@ -1949,6 +1997,7 @@ document.addEventListener('change', async event => {
 document.addEventListener('submit', event => {
   if (event.target.id === 'onboarding-form') {
     event.preventDefault();
+    const snapshot = stateSnapshot();
     const data = new FormData(event.target);
     const childName = String(data.get('childName') || '').trim();
     if (!childName) return showToast('请输入小朋友的名字');
@@ -1980,13 +2029,17 @@ document.addEventListener('submit', event => {
     state.role = 'child';
     state.screen = 'home';
     state.systemNotice = null;
+    if (!saveOrRollback(snapshot)) {
+      render();
+      return;
+    }
     pendingChildAvatar = null;
-    save();
     render();
     showToast(`欢迎 ${childName}，第一天的任务准备好啦`);
   }
   if (event.target.id === 'reward-editor-form') {
     event.preventDefault();
+    const snapshot = stateSnapshot();
     const data = new FormData(event.target);
     const rewardId = String(data.get('rewardId') || '');
     const title = String(data.get('rewardTitle') || '').trim();
@@ -2010,14 +2063,17 @@ document.addEventListener('submit', event => {
         image: pendingRewardImage || ''
       });
     }
+    if (!saveOrRollback(snapshot, rewardId ? '奖励已更新' : '奖励已新增')) {
+      render();
+      return;
+    }
     editingRewardId = null;
     pendingRewardImage = null;
-    save();
-    showToast(rewardId ? '奖励已更新' : '奖励已新增');
     render();
   }
   if (event.target.id === 'review-suggestion-form') {
     event.preventDefault();
+    const snapshot = stateSnapshot();
     const data = new FormData(event.target);
     const selectedTaskIds = data.getAll('suggestionTaskIds').filter(taskId => !state.settings.assignedReviewTaskIds.includes(taskId));
     if (!selectedTaskIds.length) return showToast('请至少选择一条新的复习建议');
@@ -2035,24 +2091,30 @@ document.addEventListener('submit', event => {
       }
     });
     state.dailyPlan = null;
-    save();
-    showToast(`已添加 ${selectedTaskIds.length} 条指定复习内容`);
+    if (!saveOrRollback(snapshot, `已添加 ${selectedTaskIds.length} 条指定复习内容`)) {
+      render();
+      return;
+    }
     render();
   }
   if (event.target.id === 'settings-form') {
     event.preventDefault();
+    const snapshot = stateSnapshot();
     const data = new FormData(event.target);
     state.settings.dailyTaskCount = Number(data.get('dailyTaskCount'));
     state.settings.dailyMinutes = Number(data.get('dailyMinutes'));
     state.settings.reminder = data.get('reminder') || '19:30';
     state.settings.assignedReviewUnitIds = data.getAll('reviewUnits');
     state.dailyPlan = null;
-    save();
-    showToast('设置已同步到儿童端');
+    if (!saveOrRollback(snapshot, '设置已同步到儿童端')) {
+      render();
+      return;
+    }
     render();
   }
   if (event.target.id === 'child-profile-form') {
     event.preventDefault();
+    const snapshot = stateSnapshot();
     const form = event.target;
     const data = new FormData(form);
     const child = state.children.find(item => item.id === data.get('childId')) || activeChild();
@@ -2060,9 +2122,11 @@ document.addEventListener('submit', event => {
     if (!childName) return showToast('请输入小孩名称');
     child.name = childName;
     if (pendingChildAvatar) child.avatar = pendingChildAvatar;
+    if (!saveOrRollback(snapshot, '小孩资料已保存')) {
+      render();
+      return;
+    }
     pendingChildAvatar = null;
-    save();
-    showToast('小孩资料已保存');
     render();
   }
 });

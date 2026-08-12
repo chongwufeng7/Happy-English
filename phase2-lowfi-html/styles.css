@@ -1182,6 +1182,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
   --home-blue-soft: var(--happy-color-bg-progress);
   --home-yellow: var(--happy-color-action-primary);
   --home-yellow-soft: var(--happy-color-bg-star);
+  width: min(100%, 390px);
   padding-bottom: 70px;
   color: var(--home-brown);
   background: var(--home-cream);
@@ -1190,8 +1191,9 @@ button.challenge-theme-card:active { transform: scale(.99); }
 
 .home-topbar {
   position: sticky;
-  min-height: 56px;
-  padding: 8px 14px;
+  min-height: 72px;
+  height: 72px;
+  padding: 16px 14px;
   color: var(--home-brown);
   background: var(--home-cream);
   border-bottom: 0;
@@ -1271,26 +1273,11 @@ button.challenge-theme-card:active { transform: scale(.99); }
 
 .home-hero-card > img {
   position: absolute;
-  top: -49%;
-  left: -1.1%;
-  width: 102.48%;
+  top: -158px;
+  left: -7px;
+  width: 372px;
   height: auto;
   max-width: none;
-}
-
-.home-hero-tagline {
-  position: absolute;
-  z-index: 1;
-  top: 15px;
-  right: 10px;
-  left: 10px;
-  margin: 0;
-  color: var(--home-brown);
-  font-size: 17px;
-  font-weight: 900;
-  line-height: 21px;
-  text-align: center;
-  letter-spacing: -.2px;
 }
 
 .home-start-button {
@@ -1545,7 +1532,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: flex-end;
   gap: 0;
-  width: min(calc(100% - 26px), 404px);
+  width: min(calc(100% - 28px), 362px);
   height: 70px;
 }
 

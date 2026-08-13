@@ -151,7 +151,7 @@ function freshState() {
   };
   const initialRewards = [];
   return {
-    version: 6,
+    version: 7,
     role: 'parent',
     screen: 'onboarding',
     currentUnitId: 'u1',
@@ -908,6 +908,7 @@ function ensureReviewItem(taskId, source) {
 
 function addReview(taskId) {
   ensureReviewItem(taskId, '孩子主动标记');
+  taskFeedback = { type: 'warning', text: '这项还不熟，将加入复习' };
   save();
   showToast('已标记“还不熟”，加入今日复习');
   render();
@@ -922,6 +923,7 @@ function removeChildReview(taskId) {
   ));
   if (state.reviewItems.length === before) return;
   state.dailyPlan = null;
+  taskFeedback = null;
   save();
   render();
   showToast('已撤销“还不熟”标记');
@@ -991,7 +993,7 @@ function header(title) {
     if (!isPrimary) {
       return `
         <header class="topbar child-topbar secondary-topbar">
-          <button class="topbar-back" data-action="secondary-back" data-screen="${backTargets[state.screen] || 'home'}" aria-label="返回">← 返回</button>
+          <button class="topbar-back" data-action="secondary-back" data-screen="${backTargets[state.screen] || 'home'}" aria-label="返回">返回</button>
           <h1>${safeTitle}</h1>
           <span class="topbar-spacer" aria-hidden="true"></span>
         </header>`;
@@ -1243,8 +1245,10 @@ function taskFeedbackBanner() {
 function taskActivity(info, hasExperienced) {
   const copy = taskLearningCopy(info);
   if (info.type === '听') {
-    return `<button class="learning-control" data-action="task-play-phrase" data-phrase="${copy.english}">
-      <span class="learning-dot blue"></span><span><strong>播放示范音频</strong><small>${hasExperienced ? '可以再次播放' : '点击开始播放'}</small></span>
+    const loadFailed = taskInteractionState === 'load-error';
+    const childMarkedReview = state.reviewItems.some(item => item.taskId === info.id && item.status === '待复习' && item.source === '孩子主动标记');
+    return `<button class="learning-control ${loadFailed ? 'is-error' : ''}" data-action="task-play-phrase" data-phrase="${copy.english}">
+      <span class="learning-dot ${loadFailed ? 'red' : 'blue'}"></span><span><strong>${loadFailed ? '重新加载音频' : childMarkedReview ? '继续播放' : '播放示范音频'}</strong><small>${loadFailed ? '播放失败，请重试' : hasExperienced ? '已暂停' : '点击开始播放'}</small></span>
     </button>`;
   }
   if (info.type === '说') {
@@ -1272,17 +1276,32 @@ function taskScreen() {
   const isInReview = state.reviewItems.some(item => item.taskId === info.id && item.status === '待复习');
   const childMarkedReview = state.reviewItems.some(item => item.taskId === info.id && item.status === '待复习' && item.source === '孩子主动标记');
   const hasExperienced = state.todayExperiencedTaskIds?.includes(info.id);
+  const isReadTask = info.type === '读';
+  const isSpeakTask = info.type === '说';
+  const loadFailed = taskInteractionState === 'load-error';
+  const showRewardHint = isReadTask;
+  const completionLabel = loadFailed
+    ? '重新加载'
+    : childMarkedReview
+      ? '完成并加入复习'
+      : isReadTask
+        ? '确认答案'
+        : '完成任务 +3 星';
+  const activity = taskActivity(info, hasExperienced);
   return `
-    ${header(info.title)}
+    ${header(loadFailed ? '加载失败' : childMarkedReview ? '加入复习' : info.title)}
     <main class="screen inner-screen task-detail-screen happy-learning-screen">
       <section class="learning-prompt-card">
         <h2>${copy.english}</h2><strong>${copy.chinese}</strong><p>${copy.instruction}</p>
       </section>
-      ${taskActivity(info, hasExperienced)}
-      ${taskFeedbackBanner()}
-      <div class="learning-reward-hint">完成后可获得 3 颗星星</div>
+      ${loadFailed ? taskFeedbackBanner() : ''}
+      ${activity}
+      ${loadFailed ? '' : taskFeedbackBanner()}
+      ${isSpeakTask && !taskFeedback?.text ? '<div class="learning-feedback">请允许使用麦克风后继续</div>' : ''}
+      ${showRewardHint ? '<div class="learning-reward-hint">完成后可获得 3 颗星星</div>' : ''}
       ${info.type === '听' ? `<div class="learning-confidence-row"><button data-action="task-confident" data-id="${info.id}">我会了</button><button class="${childMarkedReview ? 'selected' : ''}" data-action="${childMarkedReview ? 'remove-review' : 'add-review'}" data-id="${info.id}" ${isInReview && !childMarkedReview ? 'disabled' : ''}>${childMarkedReview ? '已加入复习' : '还不熟'}</button></div>` : ''}
-      <button class="primary happy-button happy-button-primary learning-complete-button" data-action="complete-task" data-id="${info.id}" ${hasExperienced ? '' : 'disabled'}>完成任务 +3 星</button>
+      <button class="primary happy-button happy-button-primary learning-complete-button" data-action="${loadFailed ? 'task-play-phrase' : 'complete-task'}" data-phrase="${copy.english}" data-id="${info.id}" ${hasExperienced || loadFailed ? '' : 'disabled'}>${completionLabel}</button>
+      ${loadFailed ? '<button class="learning-secondary-action learning-later-button" data-action="secondary-back" data-screen="home">稍后再学</button>' : ''}
     </main>`;
 }
 
@@ -1660,7 +1679,7 @@ function parentSettingsScreen() {
         <button class="settings-tab ${tab === 'content' ? 'active' : ''}" data-action="set-parent-settings-tab" data-tab="content" role="tab" aria-selected="${tab === 'content'}">教材内容</button>
       </div>
       <section class="settings-tab-panel">${tab === 'child' ? childPanel : tab === 'reward' ? rewardSettingsPanel() : contentModelPanel()}</section>
-      <footer class="settings-version"><strong>V1.6</strong><span>提醒：教材内容仍处于准备阶段，正式制作前需复核教材及授权。</span></footer>
+      <footer class="settings-version"><strong>V1.7</strong><span>提醒：教材内容仍处于准备阶段，正式制作前需复核教材及授权。</span></footer>
     </main>
     ${parentNav('parentSettings')}`;
 }
@@ -1951,9 +1970,16 @@ document.addEventListener('click', event => {
       utterance.lang = 'en-US';
       utterance.rate = 0.78;
       utterance.onend = () => { if (state.selectedTaskId) experienceTask(state.selectedTaskId); };
+      utterance.onerror = () => {
+        taskInteractionState = 'load-error';
+        taskFeedback = { type: 'warning', text: '资源加载失败，请稍后重试' };
+        render();
+      };
       window.speechSynthesis.speak(utterance);
     } else {
-      showToast('当前浏览器无法播放示范音频');
+      taskInteractionState = 'load-error';
+      taskFeedback = { type: 'warning', text: '资源加载失败，请稍后重试' };
+      render();
     }
   }
   if (action === 'task-start-recording') startTaskRecording();

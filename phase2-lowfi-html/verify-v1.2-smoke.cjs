@@ -18,7 +18,7 @@ const { chromium } = require('playwright');
   await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' });
 
   const onboardingVisible = await page.locator('#onboarding-form').isVisible();
-  const zeroStateVisible = await page.getByText('0 颗星星').isVisible();
+  const onboardingCopyVisible = await page.getByText('选择头像，再告诉我你的名字').isVisible();
   await page.locator('[name="childName"]').fill('HAPPY');
   await page.locator('#onboarding-form button[type="submit"]').click();
   await page.locator('.child-home-screen').waitFor();
@@ -28,7 +28,7 @@ const { chromium } = require('playwright');
     const raw = localStorage.getItem('happy-english-phase2-lowfi-v1');
     if (!raw) return false;
     const data = JSON.parse(raw);
-    return data.version === 6 && data.children?.[0]?.name === 'HAPPY' && data.activeChildId === data.children[0].id;
+    return data.version === 7 && data.children?.[0]?.name === 'HAPPY' && data.activeChildId === data.children[0].id;
   });
 
   await page.locator('[data-action="nav"][data-screen="rewards"]').click();
@@ -37,7 +37,7 @@ const { chromium } = require('playwright');
 
   const checks = {
     onboardingVisible,
-    zeroStateVisible,
+    onboardingCopyVisible,
     homeVisible,
     childNamePersisted,
     emptyRewardsVisible,

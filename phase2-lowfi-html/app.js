@@ -1024,7 +1024,7 @@ function header(title) {
           <h1>${safeTitle}</h1>
           ${state.screen === 'rewards' ? `<button class="star-balance" data-action="open-star-bill" aria-label="查看星星账单">☆ <strong>${state.stars}</strong></button>` : ''}
         </div>
-        <button class="text-button parent-entry" data-action="switch-role">切换家长端</button>
+        <button class="happy-pill-button home-parent-entry" data-action="switch-role">切换家长端</button>
       </header>`;
   }
   return `

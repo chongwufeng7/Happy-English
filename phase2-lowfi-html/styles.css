@@ -1578,6 +1578,11 @@ button.challenge-theme-card:active { transform: scale(.99); }
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
 }
 
+.child-adventure-shell .primary-topbar {
+  background: var(--home-cream);
+  border-bottom: 0;
+}
+
 .child-home-shell,
 .child-adventure-shell,
 .child-rewards-shell {
@@ -1585,7 +1590,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
 }
 
 .adventure-coming-screen {
-  min-height: calc(100dvh - 154px);
+  min-height: calc(100dvh - 160px);
   padding: 20px 14px 96px;
   display: grid;
   place-items: center;
@@ -2082,6 +2087,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
 @media (min-width: 700px) {
   .app-shell { margin-top: 24px; min-height: calc(100dvh - 48px); box-shadow: 0 10px 36px rgba(0,0,0,.16); }
   .bottom-nav { bottom: 24px; }
+  .adventure-coming-screen { min-height: calc(100dvh - 208px); }
 }
 
 /* V1.2 lifecycle and result states */

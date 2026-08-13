@@ -87,6 +87,35 @@ const { chromium } = require('playwright');
     };
   });
 
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => {
+    state.role = 'parent';
+    state.screen = 'parentHome';
+    state.rewards = [{ id: 'parent-layout-reward', title: '动画时间 20 分钟', cost: 30, note: '完成学习后兑换', image: '' }];
+    state.rewardRequests = [{
+      id: 'parent-layout-request', rewardId: 'parent-layout-reward', childId: state.activeChildId,
+      rewardTitleSnapshot: '动画时间 20 分钟', rewardCostSnapshot: 30,
+      rewardNoteSnapshot: '完成学习后兑换', rewardImageSnapshot: '', status: '待审批',
+      requestedAt: new Date().toISOString()
+    }];
+    render();
+  });
+  const parentOverviewLayout = await page.evaluate(() => {
+    const shell = document.querySelector('.parent-shell');
+    const nav = document.querySelector('.parent-bottom-nav');
+    const buttons = [...document.querySelectorAll('.parent-approval-card button')];
+    const navRect = nav.getBoundingClientRect();
+    return {
+      parentOverviewVisible: Boolean(document.querySelector('.parent-overview-screen')),
+      parentOverviewWidthIs390: Math.round(shell.getBoundingClientRect().width) === 390,
+      parentNavTouchesViewportBottom: Math.abs(navRect.bottom - innerHeight) <= 1,
+      parentButtonsCentered: buttons.length === 2 && buttons.every(button => {
+        const style = getComputedStyle(button);
+        return style.display === 'flex' && style.alignItems === 'center' && style.justifyContent === 'center';
+      })
+    };
+  });
+
   const checks = {
     onboardingVisible,
     onboardingCopyVisible,
@@ -99,6 +128,7 @@ const { chromium } = require('playwright');
     ledgerGroupCount,
     ledgerWidthIs390: ledgerWidth === 390,
     ...rewardLayout,
+    ...parentOverviewLayout,
     runtimeIssues: issues
   };
 

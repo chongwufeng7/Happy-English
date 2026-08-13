@@ -1069,9 +1069,9 @@ function header(title) {
       </header>`;
   }
   return `
-    <header class="topbar parent-topbar">
+    <header class="topbar parent-topbar happy-parent-topbar">
       <h1>${safeTitle}</h1>
-      <button class="text-button" data-action="switch-role">切换儿童端</button>
+      <button class="happy-pill-button" data-action="switch-role">切换儿童端</button>
     </header>`;
 }
 
@@ -1531,26 +1531,47 @@ function parentHome() {
   const plan = state.dailyPlan || buildDailyPlan();
   const reviewCount = plan.reviewTaskIds.length;
   const newCount = plan.newTaskIds.length;
+  const completedCount = state.todayCompletedIds.length;
+  const learnedMinutes = Math.min(state.settings.dailyMinutes, completedCount * 4);
+  const child = activeChild();
   return `
     ${header('概览')}
-    <main class="screen">
-      <section class="metrics">
-        <div class="card metric"><span>今日完成</span><strong>${state.todayCompletedIds.length}</strong><small>项任务</small></div>
-        <div class="card metric"><span>今日学习</span><strong>${Math.min(state.settings.dailyMinutes, state.todayCompletedIds.length * 4)}</strong><small>分钟（模拟）</small></div>
+    <main class="screen parent-overview-screen">
+      <section class="parent-child-summary happy-card">
+        <div class="parent-child-identity">
+          <div class="parent-child-avatar">${child.avatar ? `<img src="${child.avatar}" alt="${escapeHtml(child.name)}的头像">` : '<img src="assets/parent-ui/avatar-cow-cat.svg" alt="奶牛猫头像">'}</div>
+          <div><strong>${escapeHtml(activeChildName())}</strong><p>今天也在稳稳进步</p></div>
+        </div>
+        <span class="parent-current-child">当前小孩</span>
       </section>
-      <section class="card"><div class="row"><div><strong>当前计划</strong><p class="subtle">${reviewCount} 项复习 + ${newCount} 项新学 · 约 ${state.settings.dailyMinutes} 分钟 · ${state.settings.reminder} 提醒</p></div><button class="text-button" data-action="open-child-settings">修改</button></div></section>
-      <h2 class="section-title">奖励审批</h2>
-      <section class="card">${pendingRewards.length ? pendingRewards.map(request => {
+      <section class="parent-daily-metrics">
+        <article class="parent-metric-card is-progress"><img src="assets/home-ui/progress-clipboard-v1.png" alt=""><div><span>今日完成</span><strong>${completedCount}/${state.settings.dailyTaskCount}</strong></div></article>
+        <article class="parent-metric-card is-minutes"><img src="assets/parent-ui/star-face.svg" alt=""><div><span>今日学习</span><strong>${learnedMinutes}<small> 分钟</small></strong></div></article>
+      </section>
+      <section class="parent-section-block">
+        <div class="parent-section-heading"><h2>当前计划</h2><span>今天</span></div>
+        <article class="parent-plan-card happy-card">
+          <div class="parent-plan-line"><div><strong>${newCount} 项新学习</strong><p>约 ${state.settings.dailyMinutes} 分钟 · ${state.settings.reminder} 提醒</p></div><button class="parent-outline-button" data-action="open-child-settings">修改</button></div>
+          <div class="parent-plan-summary">复习 ${reviewCount} 项　新学 ${newCount} 项</div>
+        </article>
+      </section>
+      <section class="parent-section-block">
+        <div class="parent-section-heading"><h2>奖励审批</h2>${pendingRewards.length ? `<span class="parent-pending-count">${pendingRewards.length} 项待处理</span>` : ''}</div>
+        <div class="parent-approval-list">${pendingRewards.length ? pendingRewards.map(request => {
         const reward = state.rewards.find(item => item.id === request.rewardId);
         const requestReward = rewardRequestSnapshot(request, reward);
-        return `<article class="reward-row"><div class="reward-copy"><h3>${escapeHtml(requestReward.title)}</h3><p>需要 ${requestReward.cost} 颗星星</p></div><div class="button-row"><button class="text-button" data-action="reward-decision" data-decision="reject" data-id="${request.id}">拒绝</button><button class="primary" data-action="reward-decision" data-decision="approve" data-id="${request.id}">同意</button></div></article>`;
-      }).join('') : '<div class="empty">暂无兑换申请</div>'}</section>
-      <h2 class="section-title">最近处理</h2>
-      <section class="card">${processedRewards.length ? processedRewards.map(request => {
+        return `<article class="parent-approval-card happy-card"><div class="parent-approval-summary"><div><h3>${escapeHtml(requestReward.title)}</h3><p>${escapeHtml(activeChildName())} 提交了兑换申请</p></div><strong><img src="assets/parent-ui/star-cost.svg" alt="">${requestReward.cost}</strong></div><button class="parent-secondary-action" data-action="reward-decision" data-decision="reject" data-id="${request.id}">暂不兑换</button><button class="parent-primary-action" data-action="reward-decision" data-decision="approve" data-id="${request.id}">同意兑换</button></article>`;
+      }).join('') : '<div class="parent-empty-card happy-card">暂无兑换申请</div>'}</div>
+      </section>
+      <section class="parent-section-block parent-recent-section">
+        <div class="parent-section-heading"><h2>最近处理</h2></div>
+        <div class="parent-history-list">${processedRewards.length ? processedRewards.map(request => {
         const reward = state.rewards.find(item => item.id === request.rewardId);
         const requestReward = rewardRequestSnapshot(request, reward);
-        return `<article class="reward-history-row"><div><strong>${escapeHtml(requestReward.title)}</strong><p>${request.reviewedAt ? formatLedgerTime(request.reviewedAt) : '时间未知'}${request.reason ? ` · ${escapeHtml(request.reason)}` : ''}</p></div><span class="status ${request.status === '已同意' ? 'done' : request.status === '审批失败' ? 'warning' : ''}">${request.status}</span></article>`;
-      }).join('') : '<div class="empty">还没有处理记录</div>'}</section>
+        const resultText = request.status === '已同意' ? '已同意' : request.status === '已拒绝' ? '家长本次暂未同意。' : request.status;
+        return `<article class="parent-history-row happy-card"><div><strong>${escapeHtml(requestReward.title)}</strong><p>${request.reviewedAt ? formatLedgerTime(request.reviewedAt) : '时间未知'}${resultText ? ` · ${escapeHtml(resultText)}` : ''}</p></div><span class="parent-processed-badge">已处理</span></article>`;
+      }).join('') : '<div class="parent-empty-card happy-card">还没有处理记录</div>'}</div>
+      </section>
     </main>
     ${parentNav('parentHome')}`;
 }
@@ -1760,9 +1781,9 @@ function parentSettingsScreen() {
 
 function parentNav(active) {
   const items = [
-    ['parentHome', '概览', '□'], ['report', '报告', '▤'], ['parentSettings', '设置', '⚙']
+    ['parentHome', '概览', 'assets/parent-ui/nav-overview.svg'], ['report', '报告', 'assets/parent-ui/nav-report.svg'], ['parentSettings', '设置', 'assets/parent-ui/nav-settings.svg']
   ];
-  return `<nav class="bottom-nav three-items" aria-label="家长端导航">${items.map(([id, label, icon]) => `<button class="nav-item ${active === id ? 'active' : ''}" data-action="nav" data-screen="${id}"><span>${icon}</span>${label}</button>`).join('')}</nav>`;
+  return `<nav class="bottom-nav three-items parent-bottom-nav" aria-label="家长端导航">${items.map(([id, label, icon]) => `<button class="nav-item ${active === id ? 'active' : ''}" data-action="nav" data-screen="${id}"><img src="${icon}" alt="">${label}</button>`).join('')}</nav>`;
 }
 
 function requestPassword(destination = null) {
@@ -1914,7 +1935,7 @@ function render() {
   const childHomeStateTasks = isChildHome ? [...todayReviewTasks(), ...todayTasks()] : [];
   const isChildHomeState = isChildHome && (!childHomeStateTasks.length || childHomeStateTasks.every(task => state.todayCompletedIds.includes(task.id)));
   const isChildRewardsEmpty = isChildRewards && !state.rewards.length;
-  app.innerHTML = `<div class="app-shell ${isInnerScreen ? 'inner-shell' : ''} ${isChildHome ? 'child-home-shell' : ''} ${isChildHomeState ? 'child-home-state-shell' : ''} ${isChildLearning ? 'child-learning-shell' : ''} ${isChildAdventure ? 'child-adventure-shell' : ''} ${isChildRewards ? 'child-rewards-shell' : ''} ${isChildRewardsEmpty ? 'child-rewards-empty-shell' : ''} ${isChildLedger ? 'child-ledger-shell' : ''}">${systemStatusBar()}${systemNoticeBanner()}${(screens[state.screen] || fallback)()}</div>`;
+  app.innerHTML = `<div class="app-shell ${state.role === 'parent' ? 'parent-shell' : ''} ${state.role === 'parent' && state.screen === 'parentHome' ? 'parent-overview-shell' : ''} ${isInnerScreen ? 'inner-shell' : ''} ${isChildHome ? 'child-home-shell' : ''} ${isChildHomeState ? 'child-home-state-shell' : ''} ${isChildLearning ? 'child-learning-shell' : ''} ${isChildAdventure ? 'child-adventure-shell' : ''} ${isChildRewards ? 'child-rewards-shell' : ''} ${isChildRewardsEmpty ? 'child-rewards-empty-shell' : ''} ${isChildLedger ? 'child-ledger-shell' : ''}">${systemStatusBar()}${systemNoticeBanner()}${(screens[state.screen] || fallback)()}</div>`;
 
   if (['settings', 'parentSettings'].includes(state.screen)) {
     const form = document.getElementById('settings-form');

@@ -151,7 +151,7 @@ function freshState() {
   };
   const initialRewards = [];
   return {
-    version: 7,
+    version: 8,
     role: 'parent',
     screen: 'onboarding',
     currentUnitId: 'u1',
@@ -532,6 +532,47 @@ function formatLedgerTime(value) {
   return new Intl.DateTimeFormat('zh-CN', {
     month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
   }).format(date);
+}
+
+function ledgerDayKey(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'unknown';
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
+function ledgerDayLabel(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '更早';
+  const today = new Date();
+  const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dayDiff = Math.round((startToday - startDate) / 86400000);
+  if (dayDiff === 0) return '今天';
+  if (dayDiff === 1) return '昨天';
+  return `${String(date.getMonth() + 1).padStart(2, '0')}月${String(date.getDate()).padStart(2, '0')}日`;
+}
+
+function ledgerClockLabel(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '时间未知';
+  const clock = new Intl.DateTimeFormat('zh-CN', {
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).format(date);
+  return `${ledgerDayLabel(value)} ${clock}`;
+}
+
+function groupedLedgerItems() {
+  const groups = [];
+  state.starLedger.forEach(item => {
+    const key = ledgerDayKey(item.at);
+    let group = groups.find(entry => entry.key === key);
+    if (!group) {
+      group = { key, label: ledgerDayLabel(item.at), items: [] };
+      groups.push(group);
+    }
+    group.items.push(item);
+  });
+  return groups;
 }
 
 function formatRewardTime(value) {
@@ -1075,6 +1116,39 @@ function childHome() {
       : courseComplete
         ? '全部内容已完成'
         : '暂无学习任务';
+
+  if (!planTasks.length || todayComplete) {
+    const stateTitle = courseComplete
+      ? '全部学习内容已完成'
+      : todayComplete
+        ? '今天的任务完成啦'
+        : '今天还没有任务';
+    const stateDescription = courseComplete
+      ? '整册内容已经学完，可以复习喜欢的内容。'
+      : todayComplete
+        ? `完成了 ${planTasks.length} 项任务，今天获得 ${state.todayStars} 颗星星。`
+        : '家长未设置计划，系统会按正式规则自动生成';
+    return `
+      ${header('Happy 英语')}
+      <main class="screen child-home-screen child-home-state-screen">
+        <section class="metrics compact-metrics home-metrics home-state-metrics">
+          <div class="card metric home-progress-card">
+            <img class="home-metric-icon" src="assets/figma-home-10-3/raw-1.png" alt="今日进度">
+            <div class="home-metric-copy"><div class="metric-line"><span>今日进度</span><strong>${doneCount}/${planTasks.length}</strong></div></div>
+          </div>
+          <div class="card metric home-star-card">
+            <img class="home-metric-icon" src="assets/figma-home-10-3/star-balance.svg" alt="今日星星">
+            <div class="home-metric-copy"><div class="metric-line"><span>今日星星</span><strong>${state.todayStars}</strong></div></div>
+          </div>
+        </section>
+        <div class="row home-section-heading home-state-heading"><h2 class="section-title">今日任务</h2></div>
+        <section class="generic-child-empty-state home-state-card ${courseComplete ? 'is-course-complete' : todayComplete ? 'is-complete' : 'is-no-task'}">
+          <h2>${stateTitle}</h2>
+          <p>${stateDescription}</p>
+        </section>
+      </main>
+      ${childNav('home')}`;
+  }
   return `
     ${header('Happy 英语')}
     <main class="screen child-home-screen">
@@ -1084,8 +1158,6 @@ function childHome() {
         </div>
         <button class="primary happy-button happy-button-primary home-start-button" data-action="start-next" ${nextTask ? '' : 'disabled'}>${heroButtonLabel}</button>
       </section>
-      ${todayComplete ? `<section class="learning-state-card daily-complete-state"><strong>今天的学习完成啦！</strong><span>你完成了 ${planTasks.length} 项任务，今天获得 ${state.todayStars} 颗星星。</span></section>` : ''}
-      ${!planTasks.length ? `<section class="learning-state-card no-learning-state ${courseComplete ? 'course-complete' : ''}"><strong>${courseComplete ? '整册学习完成' : '今天没有学习任务'}</strong><span>${emptyLearningMessage}</span></section>` : ''}
       <section class="metrics compact-metrics home-metrics">
         <div class="card metric home-progress-card">
           <img class="home-metric-icon" src="assets/figma-home-10-3/raw-1.png" alt="今日进度">
@@ -1335,6 +1407,7 @@ function rewardRequestSnapshot(request, reward = null) {
 }
 
 function rewardsScreen() {
+  const hasRewards = state.rewards.length > 0;
   const rewardsContent = state.rewards.length
     ? state.rewards.map(reward => {
       const latestRequest = latestRewardRequest(reward.id);
@@ -1392,21 +1465,20 @@ function rewardsScreen() {
       }).join('')
     : `<section class="reward-empty-state">
         <img src="assets/reward-ui/gift.svg" alt="彩色礼物盒">
-        <h2>奖品正在准备中</h2>
-        <p>请爸爸妈妈来添加喜欢的奖品吧！<br>你可以先继续学习、收集星星。</p>
-        <button class="reward-exchange-button" data-action="open-parent-reward-settings">请家长来设置</button>
+        <h2>还没有奖品</h2>
+        <p>请家长在设置里添加奖励吧</p>
       </section>`;
   return `
     ${header('奖品兑换')}
-    <main class="screen child-rewards-screen">
-      <section class="reward-hero">
+    <main class="screen child-rewards-screen ${hasRewards ? '' : 'is-empty'}">
+      ${hasRewards ? `<section class="reward-hero">
         <div class="reward-hero-copy">
           <h1>奖品兑换</h1>
           <p>用努力收集的星星，换一份小惊喜吧！</p>
           <span>每一颗星，都是努力的记录</span>
         </div>
         <img src="assets/reward-ui/gift.svg" alt="礼物盒">
-      </section>
+      </section>` : ''}
       <h2 class="visually-hidden">为你准备的奖励，共 ${state.rewards.length} 份</h2>
       <section class="reward-grid">${rewardsContent}</section>
     </main>
@@ -1414,23 +1486,25 @@ function rewardsScreen() {
 }
 
 function starBillScreen() {
-  const income = state.starLedger.filter(item => item.amount > 0).reduce((sum, item) => sum + item.amount, 0);
-  const expense = Math.abs(state.starLedger.filter(item => item.amount < 0).reduce((sum, item) => sum + item.amount, 0));
+  const groups = groupedLedgerItems();
   return `
     ${header('星星账单')}
-    <main class="screen inner-screen ledger-screen">
-      <section class="metrics compact-metrics ledger-summary">
-        <div class="card metric"><span>累计收入</span><strong>+${income}</strong></div>
-        <div class="card metric"><span>累计支出</span><strong>-${expense}</strong></div>
-      </section>
-      <h2 class="section-title">收支记录</h2>
-      <section class="card ledger-list">
-        ${state.starLedger.length ? state.starLedger.map(item => `
-          <article class="ledger-row">
-            <div><strong>${item.action}</strong><time>${formatLedgerTime(item.at)}</time></div>
-            <b class="${item.amount >= 0 ? 'income' : 'expense'}">${item.amount >= 0 ? '+' : ''}${item.amount}</b>
-          </article>`).join('') : '<div class="empty">暂时没有星星记录</div>'}
-      </section>
+    <main class="screen inner-screen ledger-screen ${groups.length ? '' : 'is-empty'}">
+      ${groups.length ? groups.map(group => `
+        <section class="ledger-day-group">
+          <h2>${group.label}</h2>
+          <div class="ledger-day-rows">
+            ${group.items.map(item => `
+              <article class="ledger-row">
+                <div><strong>${escapeHtml(item.action)}</strong><time datetime="${escapeHtml(item.at)}">${ledgerClockLabel(item.at)}</time></div>
+                <b class="${item.amount >= 0 ? 'income' : 'expense'}">${item.amount >= 0 ? '+' : ''}${item.amount}</b>
+              </article>`).join('')}
+          </div>
+        </section>`).join('') : `
+        <section class="generic-child-empty-state ledger-empty-state">
+          <h2>还没有星星记录</h2>
+          <p>完成学习或兑换奖励后，会在这里留下记录</p>
+        </section>`}
     </main>`;
 }
 
@@ -1679,7 +1753,7 @@ function parentSettingsScreen() {
         <button class="settings-tab ${tab === 'content' ? 'active' : ''}" data-action="set-parent-settings-tab" data-tab="content" role="tab" aria-selected="${tab === 'content'}">教材内容</button>
       </div>
       <section class="settings-tab-panel">${tab === 'child' ? childPanel : tab === 'reward' ? rewardSettingsPanel() : contentModelPanel()}</section>
-      <footer class="settings-version"><strong>V1.7</strong><span>提醒：教材内容仍处于准备阶段，正式制作前需复核教材及授权。</span></footer>
+      <footer class="settings-version"><strong>V1.8</strong><span>提醒：教材内容仍处于准备阶段，正式制作前需复核教材及授权。</span></footer>
     </main>
     ${parentNav('parentSettings')}`;
 }
@@ -1836,7 +1910,11 @@ function render() {
   const isChildLearning = state.role === 'child' && ['task', 'taskResult'].includes(state.screen);
   const isChildAdventure = state.role === 'child' && ['units', 'unit', 'challengeStage'].includes(state.screen);
   const isChildRewards = state.role === 'child' && state.screen === 'rewards';
-  app.innerHTML = `<div class="app-shell ${isInnerScreen ? 'inner-shell' : ''} ${isChildHome ? 'child-home-shell' : ''} ${isChildLearning ? 'child-learning-shell' : ''} ${isChildAdventure ? 'child-adventure-shell' : ''} ${isChildRewards ? 'child-rewards-shell' : ''}">${systemStatusBar()}${systemNoticeBanner()}${(screens[state.screen] || fallback)()}</div>`;
+  const isChildLedger = state.role === 'child' && state.screen === 'starBill';
+  const childHomeStateTasks = isChildHome ? [...todayReviewTasks(), ...todayTasks()] : [];
+  const isChildHomeState = isChildHome && (!childHomeStateTasks.length || childHomeStateTasks.every(task => state.todayCompletedIds.includes(task.id)));
+  const isChildRewardsEmpty = isChildRewards && !state.rewards.length;
+  app.innerHTML = `<div class="app-shell ${isInnerScreen ? 'inner-shell' : ''} ${isChildHome ? 'child-home-shell' : ''} ${isChildHomeState ? 'child-home-state-shell' : ''} ${isChildLearning ? 'child-learning-shell' : ''} ${isChildAdventure ? 'child-adventure-shell' : ''} ${isChildRewards ? 'child-rewards-shell' : ''} ${isChildRewardsEmpty ? 'child-rewards-empty-shell' : ''} ${isChildLedger ? 'child-ledger-shell' : ''}">${systemStatusBar()}${systemNoticeBanner()}${(screens[state.screen] || fallback)()}</div>`;
 
   if (['settings', 'parentSettings'].includes(state.screen)) {
     const form = document.getElementById('settings-form');

@@ -28,12 +28,29 @@ const { chromium } = require('playwright');
     const raw = localStorage.getItem('happy-english-phase2-lowfi-v1');
     if (!raw) return false;
     const data = JSON.parse(raw);
-    return data.version === 7 && data.children?.[0]?.name === 'HAPPY' && data.activeChildId === data.children[0].id;
+    return data.version === 8 && data.children?.[0]?.name === 'HAPPY' && data.activeChildId === data.children[0].id;
   });
 
   await page.locator('[data-action="nav"][data-screen="rewards"]').click();
   await page.locator('.child-rewards-screen').waitFor();
   const emptyRewardsVisible = await page.locator('.reward-empty-state').isVisible();
+  const emptyRewardsCopyVisible = await page.getByText('还没有奖品').isVisible();
+  await page.locator('[data-action="open-star-bill"]').click();
+  await page.locator('.ledger-screen').waitFor();
+  const emptyLedgerVisible = await page.getByText('还没有星星记录').isVisible();
+
+  await page.evaluate(() => {
+    state.starLedger = [
+      { id: 'test-income', childId: state.activeChildId, amount: 3, action: '完成学习任务', at: new Date().toISOString() },
+      { id: 'test-expense', childId: state.activeChildId, amount: -2, action: '兑换奖品', at: new Date(Date.now() - 86400000).toISOString() }
+    ];
+    state.role = 'child';
+    state.screen = 'starBill';
+    render();
+  });
+  const ledgerGroupCount = await page.locator('.ledger-day-group').count();
+  const ledgerGroupsVisible = ledgerGroupCount === 2;
+  const ledgerWidth = await page.locator('.app-shell').evaluate(element => Math.round(element.getBoundingClientRect().width));
 
   const checks = {
     onboardingVisible,
@@ -41,13 +58,18 @@ const { chromium } = require('playwright');
     homeVisible,
     childNamePersisted,
     emptyRewardsVisible,
+    emptyRewardsCopyVisible,
+    emptyLedgerVisible,
+    ledgerGroupsVisible,
+    ledgerGroupCount,
+    ledgerWidthIs390: ledgerWidth === 390,
     runtimeIssues: issues
   };
 
   console.log(JSON.stringify(checks, null, 2));
   await browser.close();
 
-  if (Object.entries(checks).some(([key, value]) => key !== 'runtimeIssues' && value !== true) || issues.length) {
+  if (Object.entries(checks).some(([key, value]) => !['runtimeIssues', 'ledgerGroupCount'].includes(key) && value !== true) || issues.length) {
     process.exitCode = 1;
   }
 })();

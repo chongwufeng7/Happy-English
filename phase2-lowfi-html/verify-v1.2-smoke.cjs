@@ -52,6 +52,41 @@ const { chromium } = require('playwright');
   const ledgerGroupsVisible = ledgerGroupCount === 2;
   const ledgerWidth = await page.locator('.app-shell').evaluate(element => Math.round(element.getBoundingClientRect().width));
 
+  await page.setViewportSize({ width: 900, height: 1400 });
+  await page.evaluate(() => {
+    state.stars = 12;
+    state.rewards = [{ id: 'reward-layout', title: '1123', cost: 10, note: '测试', image: '' }];
+    state.rewardRequests = [{
+      id: 'request-layout', rewardId: 'reward-layout', childId: state.activeChildId,
+      rewardTitleSnapshot: '1123', rewardCostSnapshot: 10, rewardNoteSnapshot: '测试', rewardImageSnapshot: '',
+      status: '已拒绝', requestedAt: new Date(Date.now() - 3600000).toISOString(),
+      reviewedAt: new Date().toISOString()
+    }];
+    state.role = 'child';
+    state.screen = 'rewards';
+    render();
+  });
+  const rewardLayout = await page.evaluate(() => {
+    const card = document.querySelector('.reward-product-card');
+    const result = document.querySelector('.reward-request-result');
+    const action = document.querySelector('.reward-product-action');
+    const button = document.querySelector('.reward-exchange-button');
+    const nav = document.querySelector('.happy-bottom-nav');
+    const shell = document.querySelector('.app-shell');
+    const cardRect = card.getBoundingClientRect();
+    const resultRect = result.getBoundingClientRect();
+    const actionRect = action.getBoundingClientRect();
+    const navRect = nav.getBoundingClientRect();
+    const buttonStyle = getComputedStyle(button);
+    return {
+      noRewardOverlap: resultRect.bottom <= actionRect.top + 1,
+      rewardContentInsideCard: actionRect.bottom <= cardRect.bottom - 8,
+      rewardButtonCentered: buttonStyle.display === 'flex' && buttonStyle.alignItems === 'center' && buttonStyle.justifyContent === 'center',
+      navTouchesViewportBottom: Math.abs(navRect.bottom - innerHeight) <= 1,
+      primaryPageWidthIs390: Math.round(shell.getBoundingClientRect().width) === 390
+    };
+  });
+
   const checks = {
     onboardingVisible,
     onboardingCopyVisible,
@@ -63,6 +98,7 @@ const { chromium } = require('playwright');
     ledgerGroupsVisible,
     ledgerGroupCount,
     ledgerWidthIs390: ledgerWidth === 390,
+    ...rewardLayout,
     runtimeIssues: issues
   };
 

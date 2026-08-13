@@ -234,6 +234,9 @@ button { cursor: pointer; }
 }
 
 .happy-pill-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-height: 36px;
   padding: 7px 14px;
   color: var(--happy-color-text-primary);
@@ -242,6 +245,8 @@ button { cursor: pointer; }
   border-radius: var(--happy-radius-pill);
   box-shadow: var(--happy-shadow-card);
   font-weight: 700;
+  line-height: 1;
+  text-align: center;
   touch-action: manipulation;
 }
 
@@ -1283,6 +1288,9 @@ button.challenge-theme-card:active { transform: scale(.99); }
 .home-start-button {
   position: absolute;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   top: auto;
   bottom: 0;
   left: 50%;
@@ -1292,6 +1300,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
   min-height: 48px;
   height: 48px;
   margin: 0;
+  padding: 0;
   transform: translateX(-50%);
   color: var(--home-brown);
   background: var(--home-yellow);
@@ -1299,6 +1308,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
   border-radius: 999px;
   font-size: 22px;
   font-weight: 900;
+  line-height: 1;
   box-shadow: 0 5px 0 #eda70f, 0 8px 13px rgba(203, 135, 9, .18);
 }
 
@@ -1815,10 +1825,11 @@ button.challenge-theme-card:active { transform: scale(.99); }
   grid-template-columns: 150px minmax(0, 1fr);
   gap: 14px;
   width: 100%;
-  height: 178px;
+  min-height: 178px;
+  height: auto;
   margin: 0;
   padding: 13px;
-  overflow: hidden;
+  overflow: visible;
   background: var(--happy-color-bg-surface);
   border: 1px solid var(--happy-color-border-subtle);
   border-radius: 24px;
@@ -1843,7 +1854,10 @@ button.challenge-theme-card:active { transform: scale(.99); }
 
 .reward-product-copy {
   position: relative;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  min-height: 150px;
   padding: 3px 0 0;
 }
 
@@ -1882,13 +1896,12 @@ button.challenge-theme-card:active { transform: scale(.99); }
 }
 
 .child-rewards-shell .reward-product-action {
-  position: absolute;
-  right: 0;
-  bottom: 1px;
-  left: 0;
+  position: static;
   display: grid;
   gap: 6px;
   align-items: end;
+  margin-top: auto;
+  padding-top: 6px;
 }
 
 .child-rewards-shell .reward-product-action > strong {
@@ -1909,6 +1922,9 @@ button.challenge-theme-card:active { transform: scale(.99); }
 }
 
 .reward-exchange-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 148px;
   height: 44px;
   min-height: 44px;
@@ -1921,6 +1937,7 @@ button.challenge-theme-card:active { transform: scale(.99); }
   font-size: 16px;
   font-weight: 700;
   line-height: 20px;
+  text-align: center;
   white-space: nowrap;
 }
 
@@ -1939,7 +1956,8 @@ button.challenge-theme-card:active { transform: scale(.99); }
 }
 
 .reward-product-card.is-redeemed {
-  height: 178px;
+  min-height: 178px;
+  height: auto;
   opacity: .64;
   background: var(--happy-color-bg-surface);
 }
@@ -2085,8 +2103,8 @@ button.challenge-theme-card:active { transform: scale(.99); }
 }
 
 @media (min-width: 700px) {
-  .app-shell { margin-top: 24px; min-height: calc(100dvh - 48px); box-shadow: 0 10px 36px rgba(0,0,0,.16); }
-  .bottom-nav { bottom: 24px; }
+  .app-shell { margin-top: 24px; min-height: calc(100dvh - 24px); box-shadow: 0 10px 36px rgba(0,0,0,.16); }
+  .bottom-nav { bottom: 0; }
   .adventure-coming-screen { min-height: calc(100dvh - 208px); }
 }
 
@@ -2481,7 +2499,17 @@ button.challenge-theme-card:active { transform: scale(.99); }
 .reward-product-card.is-approval-failed .reward-state-badge { color: #9b4139; background: #ffe0dc; }
 .reward-product-card.is-rejected h2,
 .reward-product-card.is-approval-failed h2 { padding-right: 112px; }
-.reward-request-result { margin: 2px 0 0; color: #9b6b48; font-size: 10px; line-height: 14px; }
+.reward-request-result {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 4px 0 0;
+  color: #9b6b48;
+  font-size: 10px;
+  line-height: 14px;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
 
 .reward-history-row {
   display: flex;
